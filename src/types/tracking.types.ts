@@ -45,7 +45,8 @@ export interface TrackingResult {
   totalEventos: number;
   ultimoEvento: TrackingEvent | null;
   eventos: TrackingEvent[];
-  consultadoEm: string;
+  consultadoEm: string; // ISO 8601 string
+  consultadoEmFormatado: string; // Ex: "31/08/2026 às 14:04:11"
   cache: boolean;
   mensagem?: string;
 }
@@ -60,6 +61,7 @@ export interface MultiTrackingResponse {
   falhas: number;
   resultados: TrackingResult[];
   consultadoEm: string;
+  consultadoEmFormatado: string;
 }
 
 export interface ServiceSiglaInfo {
@@ -76,11 +78,12 @@ export interface MonitoredPackage {
   descricaoStatus: string;
   entregue: boolean;
   ultimoEventoData?: string | null;
-  webhookUrl?: string; // Discord, Telegram, or custom webhook
+  webhookUrl?: string;
   notificarNavegador?: boolean;
   criadoEm: string;
   atualizadoEm: string;
   ultimaVerificacao: string;
+  ultimaVerificacaoFormatada: string;
   totalEventos: number;
 }
 
@@ -92,5 +95,6 @@ export interface HistoryItem {
   servicoDescricao: string;
   entregue: boolean;
   consultadoEm: string;
+  consultadoEmFormatado: string;
   totalEventos: number;
 }

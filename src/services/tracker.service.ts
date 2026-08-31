@@ -13,6 +13,29 @@ export class TrackerService {
   private static readonly CORREIOS_REGEX = /^[A-Za-z]{2}[0-9]{9}[A-Za-z]{2}$/;
 
   /**
+   * Formata uma data para o padrão amigável brasileiro: "31/08/2026 às 14:04:11"
+   */
+  public static formatBrazilianDateTime(date = new Date()): string {
+    const options: Intl.DateTimeFormatOptions = {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    };
+    try {
+      const formatted = new Intl.DateTimeFormat('pt-BR', options).format(date);
+      // Replace the comma or space between date and time with " às "
+      return formatted.replace(', ', ' às ').replace(' ', ' às ');
+    } catch {
+      return date.toLocaleString('pt-BR');
+    }
+  }
+
+  /**
    * Valida se uma string é um código de rastreio válido dos Correios (SRO padrão 13 dígitos)
    */
   public static isValidTrackingCode(code: string): boolean {
@@ -71,19 +94,17 @@ export class TrackerService {
   }
 
   /**
-   * Converte strings de data (ex: '2024-03-09T07:27:10' ou '09/03/2024 10:30' ou '2024-03-09 07:27:10') para ISO 8601
+   * Converte strings de data para ISO 8601
    */
   public static parseToIso(dateStr: string): string {
     if (!dateStr) return new Date().toISOString();
 
     try {
-      // Direct parse
       const direct = new Date(dateStr);
       if (!isNaN(direct.getTime())) {
         return direct.toISOString();
       }
 
-      // Format DD/MM/YYYY HH:MM or DD/MM/YYYY HH:MM:SS
       const brMatch = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/);
       if (brMatch) {
         const [, day, month, year, hour = '00', min = '00', sec = '00'] = brMatch;
@@ -117,6 +138,9 @@ export class TrackerService {
    */
   public static async track(rawCode: string, bypassCache = false, apelido?: string): Promise<TrackingResult> {
     const code = this.cleanCode(rawCode);
+    const now = new Date();
+    const consultadoEm = now.toISOString();
+    const consultadoEmFormatado = this.formatBrazilianDateTime(now);
 
     if (!this.isValidTrackingCode(code)) {
       const siglaInfo = SiglasService.getSiglaInfo(code);
@@ -136,7 +160,8 @@ export class TrackerService {
         totalEventos: 0,
         ultimoEvento: null,
         eventos: [],
-        consultadoEm: new Date().toISOString(),
+        consultadoEm,
+        consultadoEmFormatado,
         cache: false,
         mensagem: 'Formato de código inválido',
       };
@@ -146,7 +171,6 @@ export class TrackerService {
     if (!bypassCache) {
       const cached = trackingCache.get(code);
       if (cached) {
-        // Record in history even if cached
         StorageService.addHistorico({
           codigo: cached.codigo,
           apelido: apelido || undefined,
@@ -154,10 +178,15 @@ export class TrackerService {
           descricaoStatus: cached.descricaoStatus,
           servicoDescricao: cached.servico.descricao,
           entregue: cached.entregue,
-          consultadoEm: new Date().toISOString(),
+          consultadoEm,
+          consultadoEmFormatado,
           totalEventos: cached.totalEventos,
         });
-        return cached;
+        return {
+          ...cached,
+          consultadoEm,
+          consultadoEmFormatado,
+        };
       }
     }
 
@@ -183,7 +212,8 @@ export class TrackerService {
         totalEventos: 0,
         ultimoEvento: null,
         eventos: [],
-        consultadoEm: new Date().toISOString(),
+        consultadoEm,
+        consultadoEmFormatado,
         cache: false,
         mensagem: err?.message || 'Falha na consulta',
       };
@@ -203,6 +233,7 @@ export class TrackerService {
       servicoDescricao: result.servico.descricao,
       entregue: result.entregue,
       consultadoEm: result.consultadoEm,
+      consultadoEmFormatado: result.consultadoEmFormatado,
       totalEventos: result.totalEventos,
     });
 
@@ -217,6 +248,9 @@ export class TrackerService {
     const timeoutId = setTimeout(() => controller.abort(), config.requestTimeoutMs);
 
     const siglaInfo = SiglasService.getSiglaInfo(code);
+    const now = new Date();
+    const consultadoEm = now.toISOString();
+    const consultadoEmFormatado = this.formatBrazilianDateTime(now);
 
     try {
       const url = `https://api.rastreadordepacotes.com.br/rastreio/${encodeURIComponent(code)}`;
@@ -310,7 +344,8 @@ export class TrackerService {
         totalEventos,
         ultimoEvento,
         eventos,
-        consultadoEm: new Date().toISOString(),
+        consultadoEm,
+        consultadoEmFormatado,
         cache: false,
       };
     } finally {
@@ -338,13 +373,15 @@ export class TrackerService {
 
     const sucessos = results.filter((r) => r.sucesso && r.totalEventos > 0).length;
     const falhas = results.length - sucessos;
+    const now = new Date();
 
     return {
       total: results.length,
       sucessos,
       falhas,
       resultados: results,
-      consultadoEm: new Date().toISOString(),
+      consultadoEm: now.toISOString(),
+      consultadoEmFormatado: this.formatBrazilianDateTime(now),
     };
   }
 }

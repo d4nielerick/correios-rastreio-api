@@ -396,13 +396,55 @@
       border: 1px solid rgba(148, 163, 184, 0.3);
     }
 
+    /* Live Timestamp Bar */
+    .timestamp-highlight-bar {
+      background: linear-gradient(90deg, rgba(0, 229, 117, 0.1) 0%, rgba(0, 136, 255, 0.08) 100%);
+      border-bottom: 1px solid rgba(0, 229, 117, 0.2);
+      padding: 0.65rem 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .live-pulse {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-green);
+      font-weight: 700;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 117, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(0, 229, 117, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 117, 0); }
+    }
+
+    .timestamp-exact {
+      font-family: 'JetBrains Mono', monospace;
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+
     .meta-bar {
-      padding: 1rem 1.75rem;
+      padding: 1.1rem 1.75rem;
       background: rgba(0, 0, 0, 0.2);
       border-bottom: 1px solid var(--card-border);
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.25rem;
     }
 
     .meta-item {
@@ -415,7 +457,10 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--text-muted);
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
     }
 
     .meta-value {
@@ -640,12 +685,24 @@
 
     .item-footer {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      gap: 0.25rem;
       font-size: 0.75rem;
       color: #64748b;
       border-top: 1px solid rgba(255, 255, 255, 0.05);
       padding-top: 0.5rem;
+    }
+
+    .item-footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item-time {
+      color: #38bdf8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
     }
 
     .empty-state {
@@ -762,7 +819,7 @@
         </div>
       </div>
       <h1>Correios Tracker API</h1>
-      <p class="subtitle">Rastreamento de encomendas em tempo real com histórico completo de eventos, alertas de entrega e monitoramento inteligente.</p>
+      <p class="subtitle">Rastreamento de encomendas em tempo real com carimbo de data/hora exatos de consulta, histórico e alertas.</p>
     </header>
 
     <!-- Navigation Tabs -->
@@ -823,21 +880,46 @@
             <div id="resBadgeStatus" class="status-badge status-POSTADO">Em Trânsito</div>
           </div>
 
+          <!-- Highlight bar showing exact live query time -->
+          <div class="timestamp-highlight-bar">
+            <div class="live-pulse">
+              <div class="pulse-dot"></div>
+              <span>Informações Atualizadas</span>
+            </div>
+            <div>
+              <span style="color: var(--text-muted);">Horário da Consulta: </span>
+              <span class="timestamp-exact" id="resExactQueryTime">-</span>
+              <span style="color: #64748b; font-size: 0.8rem; margin-left: 0.35rem;" id="resRelativeQueryTime"></span>
+            </div>
+          </div>
+
           <div class="meta-bar">
             <div class="meta-item">
-              <span class="meta-label">Status Atual</span>
+              <span class="meta-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Status Atual
+              </span>
               <span class="meta-value" id="resStatusDesc">-</span>
             </div>
             <div class="meta-item">
-              <span class="meta-label">Dias em Trânsito</span>
+              <span class="meta-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                Dias em Trânsito
+              </span>
               <span class="meta-value" id="resDays">-</span>
             </div>
             <div class="meta-item">
-              <span class="meta-label">Data da Postagem</span>
+              <span class="meta-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                Data da Postagem
+              </span>
               <span class="meta-value" id="resPostDate">-</span>
             </div>
             <div class="meta-item">
-              <span class="meta-label">Origem do Dado</span>
+              <span class="meta-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Origem do Dado
+              </span>
               <span class="meta-value" id="resCacheSource">Tempo Real</span>
             </div>
           </div>
@@ -910,7 +992,7 @@
     </div>
 
     <footer>
-      <p>Desenvolvido com Node.js, Fastify e TypeScript • Código aberto com suporte a Webhooks e Notificações</p>
+      <p>Desenvolvido com Node.js, Fastify e TypeScript • Atualizações em tempo real com precisão de segundos</p>
     </footer>
   </div>
 
@@ -919,7 +1001,6 @@
     let monitoredList = [];
     let historyList = [];
 
-    // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       loadHistory();
       loadMonitored();
@@ -1001,11 +1082,16 @@
       badge.className = `status-badge status-${data.status || 'OUTRO'}`;
       badge.textContent = (data.status || 'STATUS').replace(/_/g, ' ');
 
+      // Prominent query time
+      const formattedTime = data.consultadoEmFormatado || formatDate(data.consultadoEm);
+      document.getElementById('resExactQueryTime').textContent = formattedTime;
+      document.getElementById('resRelativeQueryTime').textContent = `(${formatRelative(data.consultadoEm)})`;
+      document.getElementById('resConsultedAt').textContent = `🕒 Dados obtidos em: ${formattedTime}`;
+
       document.getElementById('resStatusDesc').textContent = data.descricaoStatus || 'Sem informações';
       document.getElementById('resDays').textContent = data.diasEmTransito !== undefined ? `${data.diasEmTransito} dias` : '-';
       document.getElementById('resPostDate').textContent = data.dataPostagem ? formatDate(data.dataPostagem) : '-';
-      document.getElementById('resCacheSource').textContent = data.cache ? '⚡ Cache em Memória' : '🌐 Consulta Direta';
-      document.getElementById('resConsultedAt').textContent = 'Consultado em: ' + new Date(data.consultadoEm).toLocaleString('pt-BR');
+      document.getElementById('resCacheSource').textContent = data.cache ? '⚡ Cache em Memória' : '🌐 Consulta Direta em Tempo Real';
 
       const timeline = document.getElementById('timelineContainer');
       timeline.innerHTML = '';
@@ -1080,8 +1166,11 @@
               <div class="item-status">${escapeHtml(item.descricaoStatus)}</div>
             </div>
             <div class="item-footer">
-              <span>${item.servicoDescricao || 'Correios'}</span>
-              <span>${formatRelative(item.consultadoEm)}</span>
+              <div class="item-footer-row">
+                <span>${item.servicoDescricao || 'Correios'}</span>
+                <span>${formatRelative(item.consultadoEm)}</span>
+              </div>
+              <div class="item-time">🕒 ${item.consultadoEmFormatado || formatDate(item.consultadoEm)}</div>
             </div>
           </div>
         `).join('');
@@ -1129,8 +1218,11 @@
               <div class="item-status">${escapeHtml(item.descricaoStatus)}</div>
             </div>
             <div class="item-footer">
-              <span>🔔 ${item.webhookUrl ? 'Webhook Ativo' : 'Alertas Locais'}</span>
-              <button class="btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="removeMonitored(event, '${item.codigo}')">Remover</button>
+              <div class="item-footer-row">
+                <span>🔔 ${item.webhookUrl ? 'Webhook Ativo' : 'Alertas Locais'}</span>
+                <button class="btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="removeMonitored(event, '${item.codigo}')">Remover</button>
+              </div>
+              <div class="item-time">🕒 Última checagem: ${item.ultimaVerificacaoFormatada || formatDate(item.ultimaVerificacao)}</div>
             </div>
           </div>
         `).join('');
@@ -1253,7 +1345,6 @@
       }
     }
 
-    // Client background polling for monitored packages when tab is open
     function startBackgroundPolling() {
       setInterval(async () => {
         if (monitoredList.length === 0) return;
@@ -1267,14 +1358,14 @@
         } catch (e) {
           // ignore
         }
-      }, 5 * 60 * 1000); // every 5 minutes
+      }, 5 * 60 * 1000);
     }
 
     function formatDate(iso) {
       if (!iso) return '-';
       try {
         const d = new Date(iso);
-        return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       } catch {
         return iso;
       }
@@ -1284,8 +1375,9 @@
       if (!iso) return '';
       try {
         const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-        if (diff < 60) return 'agora';
-        if (diff < 3600) return `${Math.floor(diff / 60)}m atrás`;
+        if (diff < 10) return 'agora mesmo';
+        if (diff < 60) return `${diff}s atrás`;
+        if (diff < 3600) return `${Math.floor(diff / 60)}min atrás`;
         if (diff < 86400) return `${Math.floor(diff / 3600)}h atrás`;
         return `${Math.floor(diff / 86400)}d atrás`;
       } catch {

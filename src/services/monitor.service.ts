@@ -15,7 +15,6 @@ export class MonitorService {
 
     console.log(`[MonitorService] Iniciado agendador de monitoramento a cada ${Math.round(intervalMs / 60000)} minutos.`);
 
-    // Run first check after 30 seconds
     setTimeout(() => {
       this.checkAllMonitored().catch(console.error);
     }, 30000);
@@ -44,7 +43,9 @@ export class MonitorService {
     const result = await TrackerService.track(codigo);
 
     const existing = StorageService.getMonitorado(codigo);
-    const now = new Date().toISOString();
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const nowFormatado = TrackerService.formatBrazilianDateTime(now);
 
     const monitored: MonitoredPackage = {
       codigo: result.codigo,
@@ -55,9 +56,10 @@ export class MonitorService {
       ultimoEventoData: result.ultimoEvento?.data || null,
       webhookUrl: webhookUrl !== undefined ? webhookUrl : existing?.webhookUrl,
       notificarNavegador: notificarNavegador !== undefined ? notificarNavegador : (existing?.notificarNavegador ?? true),
-      criadoEm: existing?.criadoEm || now,
-      atualizadoEm: now,
-      ultimaVerificacao: now,
+      criadoEm: existing?.criadoEm || nowIso,
+      atualizadoEm: nowIso,
+      ultimaVerificacao: nowIso,
+      ultimaVerificacaoFormatada: nowFormatado,
       totalEventos: result.totalEventos,
     };
 
@@ -74,29 +76,27 @@ export class MonitorService {
 
     try {
       const all = StorageService.getMonitorados();
-      // Only check packages that are not yet delivered
       const pending = all.filter((p) => !p.entregue);
 
       let updatedCount = 0;
 
       for (const item of pending) {
         try {
-          // Bypass cache to get real-time status
           const fresh = await TrackerService.track(item.codigo, true);
 
           const hasStatusChange = fresh.status !== item.status;
           const hasNewEvents = fresh.totalEventos !== item.totalEventos;
-          const now = new Date().toISOString();
+          const now = new Date();
+          const nowIso = now.toISOString();
+          const nowFormatado = TrackerService.formatBrazilianDateTime(now);
 
           if (hasStatusChange || hasNewEvents) {
             console.log(`[MonitorService] 🔔 Alteração detectada no pacote ${item.codigo} (${item.apelido || 'sem apelido'}): ${item.status} -> ${fresh.status}`);
 
-            // Dispatch Webhook notification if configured
             if (item.webhookUrl) {
               await this.dispatchWebhook(item.webhookUrl, item, fresh);
             }
 
-            // Update storage
             const updatedPkg: MonitoredPackage = {
               ...item,
               status: fresh.status,
@@ -104,17 +104,18 @@ export class MonitorService {
               entregue: fresh.entregue,
               ultimoEventoData: fresh.ultimoEvento?.data || null,
               totalEventos: fresh.totalEventos,
-              atualizadoEm: now,
-              ultimaVerificacao: now,
+              atualizadoEm: nowIso,
+              ultimaVerificacao: nowIso,
+              ultimaVerificacaoFormatada: nowFormatado,
             };
 
             StorageService.addOrUpdateMonitorado(updatedPkg);
             updatedCount++;
           } else {
-            // Just update last checked time
             StorageService.addOrUpdateMonitorado({
               ...item,
-              ultimaVerificacao: now,
+              ultimaVerificacao: nowIso,
+              ultimaVerificacaoFormatada: nowFormatado,
             });
           }
         } catch (err: any) {
@@ -143,7 +144,6 @@ export class MonitorService {
       let body: any;
 
       if (isDiscord) {
-        // Discord Webhook Embed format
         const color = fresh.entregue ? 0x00e575 : fresh.status === 'SAIU_ENTREGA' ? 0xffcc00 : 0x0088ff;
         const title = `📦 Atualização: ${monitored.apelido ? monitored.apelido + ' (' + fresh.codigo + ')' : fresh.codigo}`;
 
@@ -163,28 +163,31 @@ export class MonitorService {
                   value: fresh.ultimoEvento?.local || fresh.ultimoEvento?.origem || 'Não informado',
                   inline: false,
                 },
+                {
+                  name: 'Horário da Consulta',
+                  value: fresh.consultadoEmFormatado,
+                  inline: false,
+                },
               ],
-              footer: { text: `Correios Tracker API • ${new Date().toLocaleString('pt-BR')}` },
+              footer: { text: `Correios Tracker API • ${fresh.consultadoEmFormatado}` },
               timestamp: new Date().toISOString(),
             },
           ],
         };
       } else if (isTelegram) {
-        // Telegram format (if sending via sendMessage endpoint)
         const text = `📦 *Atualização Correios*\n\n` +
           `*Código:* \`${fresh.codigo}\`\n` +
           (monitored.apelido ? `*Identificação:* ${monitored.apelido}\n` : '') +
           `*Status:* ${fresh.status.replace('_', ' ')}\n` +
           `*Detalhes:* ${fresh.descricaoStatus}\n` +
           `*Dias em trânsito:* ${fresh.diasEmTransito} dias\n` +
-          `*Atualizado em:* ${new Date().toLocaleString('pt-BR')}`;
+          `*Horário da Consulta:* ${fresh.consultadoEmFormatado}`;
 
         body = {
           text,
           parse_mode: 'Markdown',
         };
       } else {
-        // Generic JSON Webhook Payload
         body = {
           event: 'package.updated',
           codigo: fresh.codigo,
@@ -196,6 +199,8 @@ export class MonitorService {
           diasEmTransito: fresh.diasEmTransito,
           totalEventos: fresh.totalEventos,
           ultimoEvento: fresh.ultimoEvento,
+          consultadoEm: fresh.consultadoEm,
+          consultadoEmFormatado: fresh.consultadoEmFormatado,
           timestamp: new Date().toISOString(),
         };
       }
