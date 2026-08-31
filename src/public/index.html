@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Correios Tracker API | Rastreamento, Histórico e Notificações</title>
-  <meta name="description" content="Microserviço autônomo para rastreamento de encomendas dos Correios com histórico de consultas e notificações de mudança de status em tempo real.">
+  <title>Correios Tracker | Rastreamento, Histórico e Notificações</title>
+  <meta name="description" content="Rastreamento de encomendas dos Correios em tempo real com histórico de consultas e notificações de mudança de status.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -98,6 +98,26 @@
     .notify-tag:hover {
       background: rgba(168, 85, 247, 0.25);
       transform: translateY(-1px);
+    }
+
+    .config-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 0.4rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .config-tag:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
     }
 
     h1 {
@@ -812,14 +832,17 @@
       <div class="header-badges">
         <div class="logo-tag">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-          Microserviço Autônomo
+          Correios Tracker
         </div>
         <div class="notify-tag" id="btnBrowserNotify" onclick="requestBrowserNotificationPermission()">
-          <span>🔔</span> <span id="notifyStatusText">Ativar Notificações no Navegador</span>
+          <span>🔔</span> <span id="notifyStatusText">Ativar Notificações</span>
+        </div>
+        <div class="config-tag" onclick="openConfigModal()">
+          <span>⚙️</span> <span id="apiStatusBadge">API Conectada</span>
         </div>
       </div>
-      <h1>Correios Tracker API</h1>
-      <p class="subtitle">Rastreamento de encomendas em tempo real com carimbo de data/hora exatos de consulta, histórico e alertas.</p>
+      <h1>Correios Tracker</h1>
+      <p class="subtitle">Rastreamento de encomendas em tempo real com carimbo de data/hora exatos, histórico persistente e notificações.</p>
     </header>
 
     <!-- Navigation Tabs -->
@@ -963,8 +986,31 @@
       <div class="history-grid" id="monitoredGrid"></div>
     </div>
 
+    <!-- Modal for API Configuration -->
+    <div class="modal-overlay" id="configModal" onclick="closeModalOnBg(event, 'configModal')">
+      <div class="modal-card">
+        <h3>⚙️ Configuração da API</h3>
+        <p class="modal-desc">Configure a URL do servidor backend para consultas e webhooks.</p>
+        
+        <form onsubmit="handleSaveApiConfig(event)">
+          <div class="modal-field">
+            <label>URL Base da API Backend</label>
+            <input type="text" id="apiBaseUrlInput" placeholder="http://localhost:3000 ou https://sua-api.onrender.com" />
+            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.35rem;">
+              Se estiver rodando no GitHub Pages, você pode apontar para a sua API hospedada ou para seu localhost.
+            </small>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal('configModal')">Cancelar</button>
+            <button type="submit" class="btn-search" style="padding: 0.6rem 1.25rem; font-size: 0.9rem;">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Modal for Webhooks & Monitoring -->
-    <div class="modal-overlay" id="monitorModal" onclick="closeModalOnBg(event)">
+    <div class="modal-overlay" id="monitorModal" onclick="closeModalOnBg(event, 'monitorModal')">
       <div class="modal-card">
         <h3>🔔 Monitorar Encomenda</h3>
         <p class="modal-desc">Receba notificações automáticas quando houver qualquer alteração de status (ex: saiu para entrega, entregue).</p>
@@ -984,7 +1030,7 @@
           </div>
 
           <div class="modal-actions">
-            <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
+            <button type="button" class="btn-secondary" onclick="closeModal('monitorModal')">Cancelar</button>
             <button type="submit" class="btn-search" style="padding: 0.6rem 1.25rem; font-size: 0.9rem;">Salvar Alerta</button>
           </div>
         </form>
@@ -992,7 +1038,7 @@
     </div>
 
     <footer>
-      <p>Desenvolvido com Node.js, Fastify e TypeScript • Atualizações em tempo real com precisão de segundos</p>
+      <p>Correios Tracker • Disponível no GitHub Pages e API REST Node.js</p>
     </footer>
   </div>
 
@@ -1001,12 +1047,42 @@
     let monitoredList = [];
     let historyList = [];
 
+    // Base API URL configuration (supports standalone GitHub Pages + custom backend)
+    function getApiBaseUrl() {
+      const saved = localStorage.getItem('CORREIOS_API_BASE_URL');
+      if (saved) return saved.replace(/\/$/, '');
+      // If hosted on GitHub Pages, default to localhost or direct
+      if (window.location.hostname.includes('github.io')) {
+        return 'http://localhost:3000';
+      }
+      return '';
+    }
+
+    function setApiBaseUrl(url) {
+      if (!url || url.trim() === '') {
+        localStorage.removeItem('CORREIOS_API_BASE_URL');
+      } else {
+        localStorage.setItem('CORREIOS_API_BASE_URL', url.trim().replace(/\/$/, ''));
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       loadHistory();
       loadMonitored();
       checkBrowserNotificationState();
       startBackgroundPolling();
+      updateApiStatusBadge();
     });
+
+    function updateApiStatusBadge() {
+      const base = getApiBaseUrl();
+      const badge = document.getElementById('apiStatusBadge');
+      if (base) {
+        badge.textContent = 'API: ' + base.replace(/^https?:\/\//, '').slice(0, 18);
+      } else {
+        badge.textContent = 'API Conectada';
+      }
+    }
 
     function setSample(prefix) {
       document.getElementById('trackingCode').value = prefix + '123456789BR';
@@ -1031,6 +1107,61 @@
       }
     }
 
+    // Direct client-side tracking fallback for standalone GitHub Pages
+    async function directClientTracking(code) {
+      const url = `https://api.rastreadordepacotes.com.br/rastreio/${encodeURIComponent(code)}`;
+      const res = await fetch(url, {
+        headers: { Accept: 'application/json' }
+      });
+      if (!res.ok) throw new Error('Não foi possível consultar os Correios no momento.');
+      const json = await res.json();
+      const trackingData = json?.tracking?.[0];
+
+      const rawPositions = Array.isArray(trackingData?.Posicoes) ? trackingData.Posicoes : [];
+      const eventos = rawPositions.map(pos => {
+        const acao = pos.Acao || pos.Status || 'Atualização';
+        const detalhes = pos.DetalhesFormatado || '';
+        let origem, destino;
+        if (detalhes.includes('para')) {
+          const parts = detalhes.split(/para/i);
+          if (parts.length >= 2) {
+            origem = parts[0].replace(/de\s+/i, '').trim();
+            destino = parts[1].trim();
+          }
+        }
+        return {
+          data: pos.Data || new Date().toISOString(),
+          status: acao,
+          categoria: acao.toLowerCase().includes('entregue') ? 'ENTREGUE' : acao.toLowerCase().includes('saiu') ? 'SAIU_ENTREGA' : 'EM_TRANSITO',
+          detalhes,
+          origem,
+          destino,
+          local: destino || origem || undefined
+        };
+      });
+
+      const isDelivered = eventos.some(e => e.categoria === 'ENTREGUE');
+      const now = new Date();
+
+      return {
+        codigo: code,
+        sucesso: true,
+        servico: { sigla: code.slice(0, 2), descricao: 'Objeto Correios' },
+        status: isDelivered ? 'ENTREGUE' : (eventos[0]?.categoria || 'NAO_ENCONTRADO'),
+        descricaoStatus: eventos[0]?.status || 'Objeto ainda sem movimentações registradas.',
+        entregue: isDelivered,
+        diasEmTransito: 0,
+        dataPostagem: eventos[eventos.length - 1]?.data || null,
+        dataEntrega: isDelivered ? eventos[0]?.data : null,
+        totalEventos: eventos.length,
+        ultimoEvento: eventos[0] || null,
+        eventos,
+        consultadoEm: now.toISOString(),
+        consultadoEmFormatado: now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR'),
+        cache: false
+      };
+    }
+
     async function handleTrack(e) {
       e.preventDefault();
       const codeInput = document.getElementById('trackingCode');
@@ -1048,11 +1179,23 @@
       spinner.style.display = 'block';
 
       try {
-        const url = `/api/v1/rastreio/${encodeURIComponent(code)}${nick ? '?apelido=' + encodeURIComponent(nick) : ''}`;
-        const res = await fetch(url);
-        const data = await res.json();
+        const base = getApiBaseUrl();
+        let data;
+
+        try {
+          const url = `${base}/api/v1/rastreio/${encodeURIComponent(code)}${nick ? '?apelido=' + encodeURIComponent(nick) : ''}`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          data = await res.json();
+        } catch (apiErr) {
+          // If backend API is not responding, fallback to direct client-side fetch
+          console.warn('Backend API não respondeu, tentando consulta direta:', apiErr.message);
+          data = await directClientTracking(code);
+        }
+
         currentData = data;
         renderResult(data, nick);
+        saveLocalHistory(data, nick);
         loadHistory();
       } catch (err) {
         alert('Erro ao consultar encomenda: ' + err.message);
@@ -1082,7 +1225,6 @@
       badge.className = `status-badge status-${data.status || 'OUTRO'}`;
       badge.textContent = (data.status || 'STATUS').replace(/_/g, ' ');
 
-      // Prominent query time
       const formattedTime = data.consultadoEmFormatado || formatDate(data.consultadoEm);
       document.getElementById('resExactQueryTime').textContent = formattedTime;
       document.getElementById('resRelativeQueryTime').textContent = `(${formatRelative(data.consultadoEm)})`;
@@ -1134,12 +1276,46 @@
       container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // --- History Loading ---
+    // --- LocalStorage History Sync ---
+    function saveLocalHistory(data, nick) {
+      try {
+        const item = {
+          codigo: data.codigo,
+          apelido: nick || undefined,
+          status: data.status,
+          descricaoStatus: data.descricaoStatus,
+          servicoDescricao: data.servico?.descricao || 'Correios',
+          entregue: data.entregue,
+          consultadoEm: data.consultadoEm,
+          consultadoEmFormatado: data.consultadoEmFormatado || formatDate(data.consultadoEm),
+          totalEventos: data.totalEventos
+        };
+        let local = JSON.parse(localStorage.getItem('CORREIOS_HISTORY') || '[]');
+        local = local.filter(h => h.codigo !== item.codigo);
+        local.unshift(item);
+        if (local.length > 50) local = local.slice(0, 50);
+        localStorage.setItem('CORREIOS_HISTORY', JSON.stringify(local));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     async function loadHistory() {
       try {
-        const res = await fetch('/api/v1/historico');
-        const data = await res.json();
-        historyList = data.historico || [];
+        const base = getApiBaseUrl();
+        let list = [];
+        try {
+          const res = await fetch(`${base}/api/v1/historico`);
+          if (res.ok) {
+            const data = await res.json();
+            list = data.historico || [];
+          }
+        } catch {
+          // Fallback to localStorage
+          list = JSON.parse(localStorage.getItem('CORREIOS_HISTORY') || '[]');
+        }
+
+        historyList = list;
         document.getElementById('historyCount').textContent = historyList.length;
 
         const grid = document.getElementById('historyGrid');
@@ -1181,16 +1357,30 @@
 
     async function clearHistory() {
       if (!confirm('Deseja realmente limpar todo o histórico de consultas?')) return;
-      await fetch('/api/v1/historico', { method: 'DELETE' });
+      try {
+        const base = getApiBaseUrl();
+        await fetch(`${base}/api/v1/historico`, { method: 'DELETE' });
+      } catch {}
+      localStorage.removeItem('CORREIOS_HISTORY');
       loadHistory();
     }
 
     // --- Monitored Loading ---
     async function loadMonitored() {
       try {
-        const res = await fetch('/api/v1/monitorar');
-        const data = await res.json();
-        monitoredList = data.monitorados || [];
+        const base = getApiBaseUrl();
+        let list = [];
+        try {
+          const res = await fetch(`${base}/api/v1/monitorar`);
+          if (res.ok) {
+            const data = await res.json();
+            list = data.monitorados || [];
+          }
+        } catch {
+          list = JSON.parse(localStorage.getItem('CORREIOS_MONITORED') || '[]');
+        }
+
+        monitoredList = list;
         document.getElementById('monitoredCount').textContent = monitoredList.length;
 
         const grid = document.getElementById('monitoredGrid');
@@ -1234,7 +1424,13 @@
     async function removeMonitored(e, code) {
       e.stopPropagation();
       if (!confirm(`Remover ${code} do monitoramento?`)) return;
-      await fetch(`/api/v1/monitorar/${code}`, { method: 'DELETE' });
+      try {
+        const base = getApiBaseUrl();
+        await fetch(`${base}/api/v1/monitorar/${code}`, { method: 'DELETE' });
+      } catch {}
+      let local = JSON.parse(localStorage.getItem('CORREIOS_MONITORED') || '[]');
+      local = local.filter(p => p.codigo !== code);
+      localStorage.setItem('CORREIOS_MONITORED', JSON.stringify(local));
       loadMonitored();
     }
 
@@ -1243,7 +1439,8 @@
       btn.textContent = 'Verificando...';
       btn.disabled = true;
       try {
-        const res = await fetch('/api/v1/monitorar/verificar', { method: 'POST' });
+        const base = getApiBaseUrl();
+        const res = await fetch(`${base}/api/v1/monitorar/verificar`, { method: 'POST' });
         const data = await res.json();
         alert(`Verificação concluída! ${data.checked} pacotes verificados, ${data.updated} atualizados.`);
         loadMonitored();
@@ -1263,6 +1460,22 @@
     }
 
     // --- Modal Management ---
+    function openConfigModal() {
+      document.getElementById('apiBaseUrlInput').value = getApiBaseUrl();
+      document.getElementById('configModal').style.display = 'flex';
+    }
+
+    function handleSaveApiConfig(e) {
+      e.preventDefault();
+      const val = document.getElementById('apiBaseUrlInput').value;
+      setApiBaseUrl(val);
+      updateApiStatusBadge();
+      closeModal('configModal');
+      loadHistory();
+      loadMonitored();
+      alert('Configurações da API salvas com sucesso!');
+    }
+
     function openMonitorModal() {
       if (!currentData) return;
       document.getElementById('modalCode').value = currentData.codigo;
@@ -1270,12 +1483,12 @@
       document.getElementById('monitorModal').style.display = 'flex';
     }
 
-    function closeModal() {
-      document.getElementById('monitorModal').style.display = 'none';
+    function closeModal(modalId = 'monitorModal') {
+      document.getElementById(modalId).style.display = 'none';
     }
 
-    function closeModalOnBg(e) {
-      if (e.target.id === 'monitorModal') closeModal();
+    function closeModalOnBg(e, modalId) {
+      if (e.target.id === modalId) closeModal(modalId);
     }
 
     async function handleSaveMonitoring(e) {
@@ -1285,24 +1498,38 @@
       const webhookUrl = document.getElementById('modalWebhook').value;
 
       try {
-        const res = await fetch('/api/v1/monitorar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            codigo,
-            apelido: apelido || undefined,
-            webhookUrl: webhookUrl || undefined,
-            notificarNavegador: true
-          })
+        const base = getApiBaseUrl();
+        try {
+          await fetch(`${base}/api/v1/monitorar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              codigo,
+              apelido: apelido || undefined,
+              webhookUrl: webhookUrl || undefined,
+              notificarNavegador: true
+            })
+          });
+        } catch {}
+
+        // Also save to localStorage
+        let local = JSON.parse(localStorage.getItem('CORREIOS_MONITORED') || '[]');
+        local = local.filter(p => p.codigo !== codigo);
+        local.unshift({
+          codigo,
+          apelido: apelido || undefined,
+          status: currentData.status,
+          descricaoStatus: currentData.descricaoStatus,
+          entregue: currentData.entregue,
+          webhookUrl: webhookUrl || undefined,
+          ultimaVerificacao: new Date().toISOString(),
+          ultimaVerificacaoFormatada: new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR')
         });
-        const json = await res.json();
-        if (json.sucesso) {
-          alert('Pacote cadastrado para monitoramento com sucesso!');
-          closeModal();
-          loadMonitored();
-        } else {
-          alert('Erro: ' + (json.erro || 'Falha ao salvar'));
-        }
+        localStorage.setItem('CORREIOS_MONITORED', JSON.stringify(local));
+
+        alert('Pacote cadastrado para monitoramento com sucesso!');
+        closeModal('monitorModal');
+        loadMonitored();
       } catch (err) {
         alert('Erro: ' + err.message);
       }
@@ -1328,7 +1555,7 @@
       }
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        new Notification('Correios Tracker API 📦', {
+        new Notification('Correios Tracker 📦', {
           body: 'Notificações ativadas! Você será avisado quando suas encomendas mudarem de status.',
           icon: '/favicon.ico'
         });
@@ -1349,7 +1576,8 @@
       setInterval(async () => {
         if (monitoredList.length === 0) return;
         try {
-          const res = await fetch('/api/v1/monitorar/verificar', { method: 'POST' });
+          const base = getApiBaseUrl();
+          const res = await fetch(`${base}/api/v1/monitorar/verificar`, { method: 'POST' });
           const data = await res.json();
           if (data.updated > 0) {
             sendDesktopNotification('📦 Correios Tracker', `${data.updated} encomenda(s) tiveram novas atualizações de status!`);
@@ -1365,7 +1593,7 @@
       if (!iso) return '-';
       try {
         const d = new Date(iso);
-        return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       } catch {
         return iso;
       }
