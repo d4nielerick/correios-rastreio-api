@@ -7,6 +7,7 @@ import {
 } from '../types/tracking.types.js';
 import { trackingCache } from './cache.service.js';
 import { SiglasService } from './siglas.service.js';
+import { StorageService } from './storage.service.js';
 
 export class TrackerService {
   private static readonly CORREIOS_REGEX = /^[A-Za-z]{2}[0-9]{9}[A-Za-z]{2}$/;
@@ -112,9 +113,9 @@ export class TrackerService {
   }
 
   /**
-   * Consulta o rastreamento de um objeto com cache
+   * Consulta o rastreamento de um objeto com cache e histórico
    */
-  public static async track(rawCode: string, bypassCache = false): Promise<TrackingResult> {
+  public static async track(rawCode: string, bypassCache = false, apelido?: string): Promise<TrackingResult> {
     const code = this.cleanCode(rawCode);
 
     if (!this.isValidTrackingCode(code)) {
@@ -145,6 +146,17 @@ export class TrackerService {
     if (!bypassCache) {
       const cached = trackingCache.get(code);
       if (cached) {
+        // Record in history even if cached
+        StorageService.addHistorico({
+          codigo: cached.codigo,
+          apelido: apelido || undefined,
+          status: cached.status,
+          descricaoStatus: cached.descricaoStatus,
+          servicoDescricao: cached.servico.descricao,
+          entregue: cached.entregue,
+          consultadoEm: new Date().toISOString(),
+          totalEventos: cached.totalEventos,
+        });
         return cached;
       }
     }
@@ -182,6 +194,18 @@ export class TrackerService {
       trackingCache.set(code, result);
     }
 
+    // Record in history
+    StorageService.addHistorico({
+      codigo: result.codigo,
+      apelido: apelido || undefined,
+      status: result.status,
+      descricaoStatus: result.descricaoStatus,
+      servicoDescricao: result.servico.descricao,
+      entregue: result.entregue,
+      consultadoEm: result.consultadoEm,
+      totalEventos: result.totalEventos,
+    });
+
     return result;
   }
 
@@ -218,14 +242,12 @@ export class TrackerService {
       const rawPositions: any[] = Array.isArray(trackingData.Posicoes) ? trackingData.Posicoes : [];
       const eventos: TrackingEvent[] = [];
 
-      // Positions usually come newest first or oldest first. Let's sort them newest first.
       for (const pos of rawPositions) {
         const rawDate = pos.Data || pos.data || '';
         const isoDate = this.parseToIso(rawDate);
         const acao = pos.Acao || pos.acao || pos.Status || pos.status || 'Atualização';
         const detalhes = pos.DetalhesFormatado || pos.detalhes || pos.Detalhes || '';
 
-        // Extract origin / destination if present
         let origem: string | undefined = undefined;
         let destino: string | undefined = undefined;
 
@@ -309,7 +331,7 @@ export class TrackerService {
           .filter((c) => typeof c === 'string' && c.trim().length > 0)
           .map((c) => this.cleanCode(c))
       )
-    ).slice(0, 50); // limit batch to 50 items
+    ).slice(0, 50);
 
     const promises = cleanList.map((code) => this.track(code, bypassCache));
     const results = await Promise.all(promises);

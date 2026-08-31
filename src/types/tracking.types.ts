@@ -68,3 +68,29 @@ export interface ServiceSiglaInfo {
   descricao: string;
   categoria: 'EXPRESSO' | 'ECONOMICO' | 'INTERNACIONAL' | 'LOGISTICA_REVERSA' | 'OUTROS';
 }
+
+export interface MonitoredPackage {
+  codigo: string;
+  apelido?: string;
+  status: TrackingStatusCode;
+  descricaoStatus: string;
+  entregue: boolean;
+  ultimoEventoData?: string | null;
+  webhookUrl?: string; // Discord, Telegram, or custom webhook
+  notificarNavegador?: boolean;
+  criadoEm: string;
+  atualizadoEm: string;
+  ultimaVerificacao: string;
+  totalEventos: number;
+}
+
+export interface HistoryItem {
+  codigo: string;
+  apelido?: string;
+  status: TrackingStatusCode;
+  descricaoStatus: string;
+  servicoDescricao: string;
+  entregue: boolean;
+  consultadoEm: string;
+  totalEventos: number;
+}

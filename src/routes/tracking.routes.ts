@@ -1,11 +1,13 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { trackingCache } from '../services/cache.service.js';
+import { MonitorService } from '../services/monitor.service.js';
 import { SiglasService } from '../services/siglas.service.js';
+import { StorageService } from '../services/storage.service.js';
 import { TrackerService } from '../services/tracker.service.js';
 
 export const trackingRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
-  // Schema for GET /api/v1/rastreio/:codigo
+  // GET /api/v1/rastreio/:codigo
   app.get('/api/v1/rastreio/:codigo', async (request, reply) => {
     const paramsSchema = z.object({
       codigo: z.string().min(1).max(30),
@@ -16,6 +18,7 @@ export const trackingRoutes: FastifyPluginAsync = async (app: FastifyInstance) =
         .string()
         .optional()
         .transform((val) => val === 'true' || val === '1'),
+      apelido: z.string().optional(),
     });
 
     const parsedParams = paramsSchema.safeParse(request.params);
@@ -29,12 +32,13 @@ export const trackingRoutes: FastifyPluginAsync = async (app: FastifyInstance) =
 
     const parsedQuery = querySchema.safeParse(request.query);
     const bypassCache = parsedQuery.success ? parsedQuery.data.nocache : false;
+    const apelido = parsedQuery.success ? parsedQuery.data.apelido : undefined;
 
-    const result = await TrackerService.track(parsedParams.data.codigo, bypassCache);
+    const result = await TrackerService.track(parsedParams.data.codigo, bypassCache, apelido);
     return reply.status(200).send(result);
   });
 
-  // Schema for POST /api/v1/rastreio/multi
+  // POST /api/v1/rastreio/multi
   app.post('/api/v1/rastreio/multi', async (request, reply) => {
     const bodySchema = z.object({
       codigos: z.array(z.string().min(1).max(30)).min(1).max(50),
@@ -56,6 +60,92 @@ export const trackingRoutes: FastifyPluginAsync = async (app: FastifyInstance) =
     );
 
     return reply.status(200).send(result);
+  });
+
+  // GET /api/v1/historico
+  app.get('/api/v1/historico', async (_request, reply) => {
+    const historico = StorageService.getHistorico();
+    return reply.send({
+      sucesso: true,
+      total: historico.length,
+      historico,
+    });
+  });
+
+  // DELETE /api/v1/historico
+  app.delete('/api/v1/historico', async (_request, reply) => {
+    StorageService.clearHistorico();
+    return reply.send({
+      sucesso: true,
+      mensagem: 'Histórico de consultas limpo com sucesso.',
+    });
+  });
+
+  // --- Monitoramento e Notificações (Webhooks) ---
+
+  // GET /api/v1/monitorar
+  app.get('/api/v1/monitorar', async (_request, reply) => {
+    const monitorados = StorageService.getMonitorados();
+    return reply.send({
+      sucesso: true,
+      total: monitorados.length,
+      monitorados,
+    });
+  });
+
+  // POST /api/v1/monitorar
+  app.post('/api/v1/monitorar', async (request, reply) => {
+    const bodySchema = z.object({
+      codigo: z.string().min(1).max(30),
+      apelido: z.string().optional(),
+      webhookUrl: z.string().url().optional(),
+      notificarNavegador: z.boolean().optional().default(true),
+    });
+
+    const parsed = bodySchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.status(400).send({
+        sucesso: false,
+        erro: 'Dados inválidos para monitoramento.',
+        detalhes: parsed.error.issues,
+      });
+    }
+
+    const { codigo, apelido, webhookUrl, notificarNavegador } = parsed.data;
+    const pkg = await MonitorService.registerPackage(codigo, apelido, webhookUrl, notificarNavegador);
+
+    return reply.status(201).send({
+      sucesso: true,
+      mensagem: `Pacote ${pkg.codigo} adicionado ao monitoramento de notificações.`,
+      pacote: pkg,
+    });
+  });
+
+  // DELETE /api/v1/monitorar/:codigo
+  app.delete('/api/v1/monitorar/:codigo', async (request, reply) => {
+    const params = request.params as { codigo: string };
+    const removed = StorageService.removeMonitorado(params.codigo);
+    if (!removed) {
+      return reply.status(404).send({
+        sucesso: false,
+        erro: 'Pacote não encontrado na lista de monitoramento.',
+      });
+    }
+
+    return reply.send({
+      sucesso: true,
+      mensagem: `Pacote ${params.codigo.toUpperCase()} removido do monitoramento.`,
+    });
+  });
+
+  // POST /api/v1/monitorar/verificar (trigger manual)
+  app.post('/api/v1/monitorar/verificar', async (_request, reply) => {
+    const status = await MonitorService.checkAllMonitored();
+    return reply.send({
+      sucesso: true,
+      mensagem: 'Verificação de pacotes monitorados concluída.',
+      ...status,
+    });
   });
 
   // GET /api/v1/servicos

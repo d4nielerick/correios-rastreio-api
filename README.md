@@ -8,7 +8,7 @@
 
 Microserviço autônomo, rápido e leve para consulta e rastreamento de encomendas dos **Correios do Brasil** em tempo real, **sem necessidade de contrato corporativo (SIGEP) ou chaves pagas**.
 
-Inclui **Interface Web moderna embutida**, cache inteligente em memória (LRU), normalização de status, decodificador de siglas e suporte a consultas individuais ou em lote.
+Inclui **Interface Web moderna embutida**, **Histórico de Consultas com Apelidos**, **Sistema de Notificações Automáticas (Desktop & Webhooks)**, cache inteligente em memória (LRU), normalização de status e decodificador de siglas.
 
 ---
 
@@ -16,6 +16,11 @@ Inclui **Interface Web moderna embutida**, cache inteligente em memória (LRU), 
 
 - 🚀 **Rápido e Leve:** Desenvolvido em **Fastify + TypeScript** com pegada de memória mínima (< 30MB).
 - 🔓 **Sem Contrato:** Funciona diretamente sem necessidade de cadastro no CWS ou Cartão de Postagem.
+- 🕒 **Histórico Persistente:** Salva automaticamente as últimas encomendas consultadas com apelidos personalizados.
+- 🔔 **Notificações Automáticas:**
+  - 🖥️ **Notificações no Navegador:** Alertas nativos de desktop quando o pacote mudar de status.
+  - 📡 **Webhooks:** Suporte nativo para envio automático de alertas para **Discord** (Embeds coloridos), **Telegram** e **Webhooks HTTP customizados**.
+  - ⏱️ **Monitor em Background:** Checagem periódica em segundo plano de todas as encomendas em trânsito.
 - 🌐 **Interface Web Integrada:** Dashboard interativo servido na raiz (`/`) com visualização em linha do tempo (*timeline*).
 - ⚡ **Cache Inteligente:** Armazenamento em memória com TTL configurável para evitar sobrecarga e bloqueios de IP.
 - 🏷️ **Decodificador de Siglas:** Mapeamento automático dos prefixos (ex: `NL` = Packet Standard, `QB` = SEDEX PJ, `PA` = PAC).
@@ -38,12 +43,7 @@ cd correios-rastreio-api
 npm install
 ```
 
-### 2. Configurar variáveis de ambiente (Opcional)
-```bash
-cp .env.example .env
-```
-
-### 3. Executar em modo desenvolvimento
+### 2. Executar em modo desenvolvimento
 ```bash
 npm run dev
 ```
@@ -51,151 +51,69 @@ npm run dev
 Acesse:
 - 🌐 **Interface Web:** [http://localhost:3000](http://localhost:3000)
 - 📦 **API de Rastreio:** [http://localhost:3000/api/v1/rastreio/:codigo](http://localhost:3000/api/v1/rastreio/NL123456789BR)
+- 🕒 **Histórico de Consultas:** [http://localhost:3000/api/v1/historico](http://localhost:3000/api/v1/historico)
+- 🔔 **Monitoramento & Webhooks:** [http://localhost:3000/api/v1/monitorar](http://localhost:3000/api/v1/monitorar)
 - 💚 **Health Check:** [http://localhost:3000/health](http://localhost:3000/health)
+
+---
+
+## 🔔 Sistema de Notificações e Webhooks
+
+### 1. Cadastrar encomenda para monitoramento automático
+O serviço verifica periodicamente as encomendas em trânsito e dispara alertas para a URL configurada assim que houver nova movimentação.
+
+- **Método:** `POST`
+- **Rota:** `/api/v1/monitorar`
+
+#### Payload:
+```json
+{
+  "codigo": "NL123456789BR",
+  "apelido": "Teclado Mecânico Shopee",
+  "webhookUrl": "https://discord.com/api/webhooks/SEU_CANAL/SEU_TOKEN",
+  "notificarNavegador": true
+}
+```
+
+#### Exemplo cURL:
+```bash
+curl -X POST http://localhost:3000/api/v1/monitorar \
+  -H "Content-Type: application/json" \
+  -d '{
+    "codigo": "NL123456789BR",
+    "apelido": "Placa de Vídeo",
+    "webhookUrl": "https://discord.com/api/webhooks/123456/abcdef"
+  }'
+```
+
+---
+
+## 📖 Documentação dos Endpoints REST
+
+| Método | Endpoint | Descrição |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/rastreio/:codigo` | Rastreia um pacote (suporta query `?apelido=X&nocache=true`) |
+| `POST` | `/api/v1/rastreio/multi` | Rastreia múltiplos pacotes em lote (até 50 códigos) |
+| `GET` | `/api/v1/historico` | Retorna o histórico das últimas encomendas consultadas |
+| `DELETE` | `/api/v1/historico` | Limpa o histórico de consultas |
+| `GET` | `/api/v1/monitorar` | Lista todos os pacotes com monitoramento ativo |
+| `POST` | `/api/v1/monitorar` | Adiciona um pacote ao monitoramento com Webhook |
+| `DELETE` | `/api/v1/monitorar/:codigo` | Remove um pacote do monitoramento |
+| `POST` | `/api/v1/monitorar/verificar` | Força a checagem imediata de todas as encomendas ativas |
+| `GET` | `/api/v1/servicos/:sigla` | Retorna o tipo de serviço a partir do prefixo (ex: `QB`, `NL`) |
+| `GET` | `/health` | Status de integridade, consumo de RAM e uptime |
 
 ---
 
 ## 🐳 Executando com Docker
 
-### Usando Docker Compose:
 ```bash
 docker-compose up -d
 ```
 
-### Ou construindo a imagem manualmente:
-```bash
-docker build -t correios-rastreio-api .
-docker run -d -p 3000:3000 --name correios-api correios-rastreio-api
-```
-
----
-
-## 📖 Documentação da API REST
-
-### 1. Rastrear um único objeto
-Retorna o status atual, cálculo de dias em trânsito e o histórico completo de movimentações.
-
-- **Método:** `GET`
-- **Rota:** `/api/v1/rastreio/:codigo`
-- **Query Params:** `?nocache=true` *(opcional, força busca direta)*
-
-#### Exemplo de requisição:
-```bash
-curl http://localhost:3000/api/v1/rastreio/NL123456789BR
-```
-
-#### Exemplo de resposta (`200 OK`):
-```json
-{
-  "codigo": "NL123456789BR",
-  "sucesso": true,
-  "servico": {
-    "sigla": "NL",
-    "descricao": "Packet Standard / Prime"
-  },
-  "status": "EM_TRANSITO",
-  "descricaoStatus": "Objeto em transferência - por favor aguarde",
-  "entregue": false,
-  "diasEmTransito": 3,
-  "dataPostagem": "2024-03-06T15:25:05.000Z",
-  "dataEntrega": null,
-  "totalEventos": 2,
-  "ultimoEvento": {
-    "data": "2024-03-09T10:27:10.000Z",
-    "dataOriginal": "09/03/2024 10:27",
-    "status": "Objeto em transferência - por favor aguarde",
-    "categoria": "EM_TRANSITO",
-    "detalhes": "de Unidade de Tratamento, CURITIBA/PR para Unidade de Distribuição, MARECHAL CANDIDO RONDON/PR",
-    "origem": "Unidade de Tratamento, CURITIBA/PR",
-    "destino": "Unidade de Distribuição, MARECHAL CANDIDO RONDON/PR",
-    "local": "Unidade de Distribuição, MARECHAL CANDIDO RONDON/PR"
-  },
-  "eventos": [
-    {
-      "data": "2024-03-09T10:27:10.000Z",
-      "dataOriginal": "09/03/2024 10:27",
-      "status": "Objeto em transferência - por favor aguarde",
-      "categoria": "EM_TRANSITO",
-      "detalhes": "de Unidade de Tratamento, CURITIBA/PR para Unidade de Distribuição, MARECHAL CANDIDO RONDON/PR",
-      "origem": "Unidade de Tratamento, CURITIBA/PR",
-      "destino": "Unidade de Distribuição, MARECHAL CANDIDO RONDON/PR",
-      "local": "Unidade de Distribuição, MARECHAL CANDIDO RONDON/PR"
-    },
-    {
-      "data": "2024-03-06T15:25:05.000Z",
-      "dataOriginal": "06/03/2024 12:25",
-      "status": "Objeto postado",
-      "categoria": "POSTADO",
-      "detalhes": "Unidade de Tratamento, SOROCABA/SP",
-      "local": "Unidade de Tratamento, SOROCABA/SP"
-    }
-  ],
-  "consultadoEm": "2026-08-31T12:00:00.000Z",
-  "cache": false
-}
-```
-
----
-
-### 2. Rastreamento em Lote (Múltiplos Códigos)
-Permite consultar até 50 encomendas de uma só vez em paralelo.
-
-- **Método:** `POST`
-- **Rota:** `/api/v1/rastreio/multi`
-
-#### Payload:
-```json
-{
-  "codigos": [
-    "NL123456789BR",
-    "QB987654321BR",
-    "PA112233445BR"
-  ],
-  "nocache": false
-}
-```
-
-#### Exemplo de requisição:
-```bash
-curl -X POST http://localhost:3000/api/v1/rastreio/multi \
-  -H "Content-Type: application/json" \
-  -d '{"codigos":["NL123456789BR","QB987654321BR"]}'
-```
-
----
-
-### 3. Consultar Informações de Sigla/Serviço
-- **Método:** `GET`
-- **Rota:** `/api/v1/servicos/:sigla`
-
-```bash
-curl http://localhost:3000/api/v1/servicos/QB
-```
-
----
-
-### 4. Estatísticas de Cache e Limpeza Manual
-- **Estatísticas:** `GET /api/v1/cache/stats`
-- **Limpar código específico:** `DELETE /api/v1/cache/:codigo`
-
----
-
-## ⚙️ Variáveis de Ambiente
-
-| Variável | Padrão | Descrição |
-| :--- | :--- | :--- |
-| `PORT` | `3000` | Porta HTTP do servidor |
-| `HOST` | `0.0.0.0` | Endereço de escuta |
-| `NODE_ENV` | `development` | Ambiente (`development`, `production`, `test`) |
-| `CACHE_TTL_MS` | `300000` | Tempo de expiração do cache (padrão: 5 minutos) |
-| `CACHE_MAX_ITEMS`| `1000` | Limite máximo de objetos em memória |
-| `REQUEST_TIMEOUT_MS` | `15000` | Timeout máximo das requisições externas |
-
 ---
 
 ## 🧪 Testes Automatizados
-
-Para rodar a suíte de testes unitários:
 
 ```bash
 npm test
@@ -205,4 +123,4 @@ npm test
 
 ## 📄 Licença
 
-Distribuído sob a licença **MIT**. Consulte `LICENSE` para mais informações.
+Distribuído sob a licença **MIT**.

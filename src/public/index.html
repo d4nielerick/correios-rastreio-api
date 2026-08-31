@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Correios Tracker API | Rastreamento em Tempo Real</title>
-  <meta name="description" content="Microserviço autônomo e veloz para consulta de rastreamento de encomendas dos Correios sem necessidade de contrato.">
+  <title>Correios Tracker API | Rastreamento, Histórico e Notificações</title>
+  <meta name="description" content="Microserviço autônomo para rastreamento de encomendas dos Correios com histórico de consultas e notificações de mudança de status em tempo real.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
     :root {
@@ -20,6 +20,7 @@
       --accent-green: #00e575;
       --accent-orange: #ff9900;
       --accent-red: #ff4757;
+      --accent-purple: #a855f7;
       --text-main: #f1f5f9;
       --text-muted: #94a3b8;
       --timeline-line: rgba(255, 255, 255, 0.12);
@@ -48,12 +49,20 @@
 
     .container {
       width: 100%;
-      max-width: 920px;
+      max-width: 940px;
     }
 
     header {
       text-align: center;
       margin-bottom: 2.5rem;
+    }
+
+    .header-badges {
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
     }
 
     .logo-tag {
@@ -69,13 +78,26 @@
       font-weight: 600;
       letter-spacing: 0.5px;
       text-transform: uppercase;
-      margin-bottom: 1rem;
     }
 
-    .logo-tag svg {
-      width: 16px;
-      height: 16px;
-      fill: currentColor;
+    .notify-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(168, 85, 247, 0.12);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      padding: 0.4rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .notify-tag:hover {
+      background: rgba(168, 85, 247, 0.25);
+      transform: translateY(-1px);
     }
 
     h1 {
@@ -91,25 +113,68 @@
     .subtitle {
       color: var(--text-muted);
       font-size: 1.05rem;
-      max-width: 600px;
+      max-width: 620px;
       margin: 0 auto;
       line-height: 1.6;
     }
 
+    /* Tabs Bar */
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 0.75rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-yellow);
+      background: rgba(255, 204, 0, 0.12);
+      border: 1px solid rgba(255, 204, 0, 0.25);
+    }
+
+    .tab-count {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.1rem 0.45rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+    }
+
+    .tab-btn.active .tab-count {
+      background: rgba(255, 204, 0, 0.3);
+      color: #fff;
+    }
+
+    /* Search Section */
     .search-card {
       background: var(--card-bg);
       backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--card-border);
       border-radius: var(--radius-lg);
       padding: 1.75rem;
       box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
       margin-bottom: 2rem;
-      transition: border-color 0.2s ease;
-    }
-
-    .search-card:focus-within {
-      border-color: rgba(255, 204, 0, 0.4);
     }
 
     .input-group {
@@ -121,7 +186,7 @@
     .input-wrapper {
       position: relative;
       flex: 1;
-      min-width: 260px;
+      min-width: 220px;
     }
 
     .input-wrapper input {
@@ -143,6 +208,18 @@
       border-color: var(--accent-yellow);
       box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.15);
       background: rgba(12, 15, 23, 0.95);
+    }
+
+    .input-wrapper.nickname-wrapper {
+      flex: 0.8;
+      min-width: 180px;
+    }
+
+    .input-wrapper.nickname-wrapper input {
+      text-transform: none;
+      font-family: inherit;
+      font-size: 0.95rem;
+      padding-left: 1.25rem;
     }
 
     .input-icon {
@@ -173,10 +250,6 @@
     button.btn-search:hover {
       transform: translateY(-2px);
       box-shadow: 0 12px 24px -6px rgba(255, 204, 0, 0.5);
-    }
-
-    button.btn-search:active {
-      transform: translateY(0);
     }
 
     .quick-samples {
@@ -241,24 +314,37 @@
 
     .package-title-area {
       display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .code-row {
+      display: flex;
       align-items: center;
-      gap: 0.85rem;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .package-nickname {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
     }
 
     .package-code {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--accent-yellow);
     }
 
     .badge-service {
       background: rgba(0, 136, 255, 0.15);
       color: var(--accent-blue);
       border: 1px solid rgba(0, 136, 255, 0.3);
-      padding: 0.25rem 0.65rem;
+      padding: 0.2rem 0.6rem;
       border-radius: 6px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 600;
     }
 
@@ -426,7 +512,15 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
       background: rgba(0, 0, 0, 0.15);
+    }
+
+    .footer-btn-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .btn-secondary {
@@ -449,77 +543,188 @@
       color: #fff;
     }
 
-    /* API Docs Accordion */
-    .docs-card {
+    .btn-notify {
+      background: rgba(168, 85, 247, 0.15);
+      color: #d8b4fe;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .btn-notify:hover {
+      background: rgba(168, 85, 247, 0.25);
+      color: #fff;
+    }
+
+    /* History & Monitored List */
+    .history-card {
       background: var(--card-bg);
       backdrop-filter: blur(16px);
       border: 1px solid var(--card-border);
       border-radius: var(--radius-lg);
-      overflow: hidden;
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      display: none;
     }
 
-    .docs-header {
-      padding: 1.25rem 1.75rem;
-      border-bottom: 1px solid var(--card-border);
-      font-weight: 700;
-      font-size: 1rem;
+    .history-card.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .history-header {
       display: flex;
+      justify-content: space-between;
       align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
       gap: 0.5rem;
     }
 
-    .docs-body {
-      padding: 1.5rem 1.75rem;
+    .history-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
     }
 
-    .endpoint-row {
-      margin-bottom: 1.25rem;
-      padding-bottom: 1.25rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
     }
 
-    .endpoint-row:last-child {
-      margin-bottom: 0;
-      padding-bottom: 0;
-      border-bottom: none;
+    .history-item-box {
+      background: rgba(12, 15, 23, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
     }
 
-    .endpoint-badge {
-      display: inline-block;
+    .history-item-box:hover {
+      border-color: rgba(255, 204, 0, 0.4);
+      transform: translateY(-2px);
+      background: rgba(12, 15, 23, 0.85);
+    }
+
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .item-code {
       font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
-      font-size: 0.75rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      margin-right: 0.5rem;
+      color: #fff;
+      font-size: 1rem;
     }
 
-    .badge-get { background: #0284c7; color: #fff; }
-    .badge-post { background: #16a34a; color: #fff; }
-
-    .endpoint-path {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.9rem;
-      color: #e2e8f0;
-    }
-
-    .endpoint-desc {
-      color: var(--text-muted);
+    .item-nick {
       font-size: 0.85rem;
-      margin-top: 0.35rem;
+      color: var(--accent-yellow);
+      font-weight: 600;
+      margin-bottom: 0.2rem;
     }
 
-    .code-block {
-      background: #090c12;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: var(--radius-sm);
-      padding: 0.85rem 1rem;
-      font-family: 'JetBrains Mono', monospace;
+    .item-status {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      line-height: 1.4;
+    }
+
+    .item-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: #64748b;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 0.5rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      stroke: #475569;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+
+    .modal-card {
+      background: #131722;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      max-width: 500px;
+      width: 100%;
+      padding: 1.75rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-card h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+
+    .modal-field {
+      margin-bottom: 1rem;
+    }
+
+    .modal-field label {
+      display: block;
       font-size: 0.8rem;
-      color: #a5f3fc;
-      margin-top: 0.5rem;
-      overflow-x: auto;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 0.35rem;
+    }
+
+    .modal-field input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      color: #fff;
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
     }
 
     .loading-spinner {
@@ -542,168 +747,232 @@
       color: #64748b;
       font-size: 0.85rem;
     }
-
-    footer a {
-      color: #94a3b8;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    footer a:hover {
-      color: var(--accent-yellow);
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <div class="logo-tag">
-        <svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-        Microserviço Autônomo
+      <div class="header-badges">
+        <div class="logo-tag">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+          Microserviço Autônomo
+        </div>
+        <div class="notify-tag" id="btnBrowserNotify" onclick="requestBrowserNotificationPermission()">
+          <span>🔔</span> <span id="notifyStatusText">Ativar Notificações no Navegador</span>
+        </div>
       </div>
       <h1>Correios Tracker API</h1>
-      <p class="subtitle">Rastreamento de encomendas rápido, em tempo real, sem necessidade de chaves de API ou contratos corporativos.</p>
+      <p class="subtitle">Rastreamento de encomendas em tempo real com histórico completo de eventos, alertas de entrega e monitoramento inteligente.</p>
     </header>
 
-    <div class="search-card">
-      <form id="trackForm" onsubmit="handleTrack(event)">
-        <div class="input-group">
-          <div class="input-wrapper">
-            <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text" id="trackingCode" placeholder="Ex: NL123456789BR" autocomplete="off" required maxlength="30" />
-          </div>
-          <button type="submit" class="btn-search" id="submitBtn">
-            <span id="btnText">Rastrear</span>
-            <div class="loading-spinner" id="spinner"></div>
-          </button>
-        </div>
-      </form>
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('search')">
+        🔍 Consultar Pacote
+      </button>
+      <button class="tab-btn" onclick="switchTab('history')">
+        🕒 Histórico de Consultas <span class="tab-count" id="historyCount">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('monitored')">
+        🔔 Pacotes Monitorados <span class="tab-count" id="monitoredCount">0</span>
+      </button>
+    </div>
 
-      <div class="quick-samples">
-        <span>Formatos suportados:</span>
-        <span class="sample-pill" onclick="setSample('NL')">NL (Packet Standard)</span>
-        <span class="sample-pill" onclick="setSample('QB')">QB (SEDEX PJ)</span>
-        <span class="sample-pill" onclick="setSample('PA')">PA (PAC)</span>
-        <span class="sample-pill" onclick="setSample('NM')">NM (Mini Envios)</span>
+    <!-- TAB 1: Search Form -->
+    <div id="tab-search">
+      <div class="search-card">
+        <form id="trackForm" onsubmit="handleTrack(event)">
+          <div class="input-group">
+            <div class="input-wrapper">
+              <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="trackingCode" placeholder="Código: Ex: NL123456789BR" autocomplete="off" required maxlength="30" />
+            </div>
+            <div class="input-wrapper nickname-wrapper">
+              <input type="text" id="trackingNick" placeholder="Apelido opcional (Ex: Teclado Shopee)" maxlength="40" />
+            </div>
+            <button type="submit" class="btn-search" id="submitBtn">
+              <span id="btnText">Rastrear</span>
+              <div class="loading-spinner" id="spinner"></div>
+            </button>
+          </div>
+        </form>
+
+        <div class="quick-samples">
+          <span>Formatos suportados:</span>
+          <span class="sample-pill" onclick="setSample('NL')">NL (Packet Standard)</span>
+          <span class="sample-pill" onclick="setSample('QB')">QB (SEDEX PJ)</span>
+          <span class="sample-pill" onclick="setSample('PA')">PA (PAC)</span>
+          <span class="sample-pill" onclick="setSample('NM')">NM (Mini Envios)</span>
+        </div>
+      </div>
+
+      <!-- Result Area -->
+      <div class="result-container" id="resultContainer">
+        <div class="package-card">
+          <div class="package-header">
+            <div class="package-title-area">
+              <div class="package-nickname" id="resNick"></div>
+              <div class="code-row">
+                <span class="package-code" id="resCode">NL123456789BR</span>
+                <span class="badge-service" id="resService">Packet Standard</span>
+              </div>
+            </div>
+            <div id="resBadgeStatus" class="status-badge status-POSTADO">Em Trânsito</div>
+          </div>
+
+          <div class="meta-bar">
+            <div class="meta-item">
+              <span class="meta-label">Status Atual</span>
+              <span class="meta-value" id="resStatusDesc">-</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Dias em Trânsito</span>
+              <span class="meta-value" id="resDays">-</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Data da Postagem</span>
+              <span class="meta-value" id="resPostDate">-</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Origem do Dado</span>
+              <span class="meta-value" id="resCacheSource">Tempo Real</span>
+            </div>
+          </div>
+
+          <div class="timeline" id="timelineContainer">
+            <!-- Timeline items inserted here -->
+          </div>
+
+          <div class="card-footer-actions">
+            <div class="footer-btn-group">
+              <button class="btn-secondary" onclick="copyJson()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Copiar JSON
+              </button>
+              <button class="btn-secondary btn-notify" onclick="openMonitorModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                Configurar Alerta / Webhook
+              </button>
+            </div>
+            <span style="font-size: 0.75rem; color: #64748b;" id="resConsultedAt"></span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Result Area -->
-    <div class="result-container" id="resultContainer">
-      <div class="package-card">
-        <div class="package-header">
-          <div class="package-title-area">
-            <span class="package-code" id="resCode">NL123456789BR</span>
-            <span class="badge-service" id="resService">Packet Standard</span>
-          </div>
-          <div id="resBadgeStatus" class="status-badge status-POSTADO">Em Trânsito</div>
-        </div>
-
-        <div class="meta-bar">
-          <div class="meta-item">
-            <span class="meta-label">Status Atual</span>
-            <span class="meta-value" id="resStatusDesc">-</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Dias em Trânsito</span>
-            <span class="meta-value" id="resDays">-</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Data da Postagem</span>
-            <span class="meta-value" id="resPostDate">-</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Origem do Dado</span>
-            <span class="meta-value" id="resCacheSource">Tempo Real</span>
-          </div>
-        </div>
-
-        <div class="timeline" id="timelineContainer">
-          <!-- Timeline items inserted here -->
-        </div>
-
-        <div class="card-footer-actions">
-          <button class="btn-secondary" onclick="copyJson()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            Copiar Resposta JSON
-          </button>
-          <span style="font-size: 0.75rem; color: #64748b;" id="resConsultedAt"></span>
-        </div>
+    <!-- TAB 2: History List -->
+    <div id="tab-history" class="history-card">
+      <div class="history-header">
+        <h2>Histórico de Consultas Recentes</h2>
+        <button class="btn-secondary" onclick="clearHistory()">🗑️ Limpar Histórico</button>
       </div>
+      <div class="history-grid" id="historyGrid"></div>
     </div>
 
-    <!-- API Reference Docs -->
-    <div class="docs-card">
-      <div class="docs-header">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-        Referência Rápida da API REST
+    <!-- TAB 3: Monitored Packages -->
+    <div id="tab-monitored" class="history-card">
+      <div class="history-header">
+        <h2>Pacotes Monitorados com Notificações Ativas</h2>
+        <button class="btn-secondary" onclick="checkMonitoredNow()">⚡ Verificar Agora</button>
       </div>
-      <div class="docs-body">
-        <div class="endpoint-row">
-          <span class="endpoint-badge badge-get">GET</span>
-          <span class="endpoint-path">/api/v1/rastreio/:codigo</span>
-          <div class="endpoint-desc">Consulta o status detalhado e histórico de movimentações de uma encomenda.</div>
-          <div class="code-block">curl http://localhost:3000/api/v1/rastreio/NL123456789BR</div>
-        </div>
+      <div class="history-grid" id="monitoredGrid"></div>
+    </div>
 
-        <div class="endpoint-row">
-          <span class="endpoint-badge badge-post">POST</span>
-          <span class="endpoint-path">/api/v1/rastreio/multi</span>
-          <div class="endpoint-desc">Rastreia múltiplos pacotes em uma única requisição em lote (até 50 códigos).</div>
-          <div class="code-block">curl -X POST http://localhost:3000/api/v1/rastreio/multi -H "Content-Type: application/json" -d '{"codigos":["NL123456789BR","QB123456789BR"]}'</div>
-        </div>
+    <!-- Modal for Webhooks & Monitoring -->
+    <div class="modal-overlay" id="monitorModal" onclick="closeModalOnBg(event)">
+      <div class="modal-card">
+        <h3>🔔 Monitorar Encomenda</h3>
+        <p class="modal-desc">Receba notificações automáticas quando houver qualquer alteração de status (ex: saiu para entrega, entregue).</p>
+        
+        <form onsubmit="handleSaveMonitoring(event)">
+          <div class="modal-field">
+            <label>Código de Rastreio</label>
+            <input type="text" id="modalCode" readonly style="color: var(--accent-yellow); font-family: 'JetBrains Mono', monospace;" />
+          </div>
+          <div class="modal-field">
+            <label>Apelido / Descrição</label>
+            <input type="text" id="modalNick" placeholder="Ex: Placa de Vídeo AliExpress" />
+          </div>
+          <div class="modal-field">
+            <label>Webhook URL (Opcional - Discord / Telegram / Custom)</label>
+            <input type="url" id="modalWebhook" placeholder="https://discord.com/api/webhooks/..." />
+          </div>
 
-        <div class="endpoint-row">
-          <span class="endpoint-badge badge-get">GET</span>
-          <span class="endpoint-path">/api/v1/servicos/:sigla</span>
-          <div class="endpoint-desc">Retorna informações e descrição do tipo de serviço pelo prefixo (ex: QB, NL, PA).</div>
-          <div class="code-block">curl http://localhost:3000/api/v1/servicos/QB</div>
-        </div>
-
-        <div class="endpoint-row">
-          <span class="endpoint-badge badge-get">GET</span>
-          <span class="endpoint-path">/health</span>
-          <div class="endpoint-desc">Monitoramento e métricas de integridade, memória e uptime do microserviço.</div>
-        </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
+            <button type="submit" class="btn-search" style="padding: 0.6rem 1.25rem; font-size: 0.9rem;">Salvar Alerta</button>
+          </div>
+        </form>
       </div>
     </div>
 
     <footer>
-      <p>Desenvolvido com Node.js, Fastify e TypeScript • Código aberto pronto para deploy</p>
+      <p>Desenvolvido com Node.js, Fastify e TypeScript • Código aberto com suporte a Webhooks e Notificações</p>
     </footer>
   </div>
 
   <script>
     let currentData = null;
+    let monitoredList = [];
+    let historyList = [];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadHistory();
+      loadMonitored();
+      checkBrowserNotificationState();
+      startBackgroundPolling();
+    });
 
     function setSample(prefix) {
       document.getElementById('trackingCode').value = prefix + '123456789BR';
       document.getElementById('trackingCode').focus();
     }
 
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.history-card').forEach(c => c.classList.remove('active'));
+      document.getElementById('tab-search').style.display = tab === 'search' ? 'block' : 'none';
+
+      if (tab === 'search') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      } else if (tab === 'history') {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('tab-history').classList.add('active');
+        loadHistory();
+      } else if (tab === 'monitored') {
+        document.querySelectorAll('.tab-btn')[2].classList.add('active');
+        document.getElementById('tab-monitored').classList.add('active');
+        loadMonitored();
+      }
+    }
+
     async function handleTrack(e) {
       e.preventDefault();
       const codeInput = document.getElementById('trackingCode');
+      const nickInput = document.getElementById('trackingNick');
       const code = codeInput.value.trim().toUpperCase();
+      const nick = nickInput.value.trim();
       if (!code) return;
 
       const btn = document.getElementById('submitBtn');
       const btnText = document.getElementById('btnText');
       const spinner = document.getElementById('spinner');
-      const resultContainer = document.getElementById('resultContainer');
 
       btn.disabled = true;
       btnText.style.display = 'none';
       spinner.style.display = 'block';
 
       try {
-        const res = await fetch(`/api/v1/rastreio/${encodeURIComponent(code)}`);
+        const url = `/api/v1/rastreio/${encodeURIComponent(code)}${nick ? '?apelido=' + encodeURIComponent(nick) : ''}`;
+        const res = await fetch(url);
         const data = await res.json();
         currentData = data;
-        renderResult(data);
+        renderResult(data, nick);
+        loadHistory();
       } catch (err) {
         alert('Erro ao consultar encomenda: ' + err.message);
       } finally {
@@ -713,16 +982,24 @@
       }
     }
 
-    function renderResult(data) {
+    function renderResult(data, customNick = '') {
       const container = document.getElementById('resultContainer');
       container.style.display = 'block';
+
+      const nickEl = document.getElementById('resNick');
+      if (customNick) {
+        nickEl.textContent = customNick;
+        nickEl.style.display = 'block';
+      } else {
+        nickEl.style.display = 'none';
+      }
 
       document.getElementById('resCode').textContent = data.codigo || '-';
       document.getElementById('resService').textContent = data.servico?.descricao || 'Correios';
 
       const badge = document.getElementById('resBadgeStatus');
       badge.className = `status-badge status-${data.status || 'OUTRO'}`;
-      badge.textContent = (data.status || 'STATUS').replace('_', ' ');
+      badge.textContent = (data.status || 'STATUS').replace(/_/g, ' ');
 
       document.getElementById('resStatusDesc').textContent = data.descricaoStatus || 'Sem informações';
       document.getElementById('resDays').textContent = data.diasEmTransito !== undefined ? `${data.diasEmTransito} dias` : '-';
@@ -771,6 +1048,228 @@
       container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
+    // --- History Loading ---
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/v1/historico');
+        const data = await res.json();
+        historyList = data.historico || [];
+        document.getElementById('historyCount').textContent = historyList.length;
+
+        const grid = document.getElementById('historyGrid');
+        if (!grid) return;
+
+        if (historyList.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <p>Nenhuma consulta recente encontrada.</p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = historyList.map(item => `
+          <div class="history-item-box" onclick="quickTrack('${item.codigo}', '${item.apelido || ''}')">
+            <div>
+              <div class="item-top">
+                <span class="item-code">${item.codigo}</span>
+                <span class="status-badge status-${item.status}" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;">${item.status.replace(/_/g, ' ')}</span>
+              </div>
+              ${item.apelido ? `<div class="item-nick">${escapeHtml(item.apelido)}</div>` : ''}
+              <div class="item-status">${escapeHtml(item.descricaoStatus)}</div>
+            </div>
+            <div class="item-footer">
+              <span>${item.servicoDescricao || 'Correios'}</span>
+              <span>${formatRelative(item.consultadoEm)}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Erro ao carregar histórico:', err);
+      }
+    }
+
+    async function clearHistory() {
+      if (!confirm('Deseja realmente limpar todo o histórico de consultas?')) return;
+      await fetch('/api/v1/historico', { method: 'DELETE' });
+      loadHistory();
+    }
+
+    // --- Monitored Loading ---
+    async function loadMonitored() {
+      try {
+        const res = await fetch('/api/v1/monitorar');
+        const data = await res.json();
+        monitoredList = data.monitorados || [];
+        document.getElementById('monitoredCount').textContent = monitoredList.length;
+
+        const grid = document.getElementById('monitoredGrid');
+        if (!grid) return;
+
+        if (monitoredList.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              <p>Nenhum pacote em monitoramento no momento.</p>
+              <p style="font-size: 0.8rem; margin-top: 0.25rem;">Consulte um pacote e clique em "Configurar Alerta / Webhook".</p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = monitoredList.map(item => `
+          <div class="history-item-box">
+            <div onclick="quickTrack('${item.codigo}', '${item.apelido || ''}')">
+              <div class="item-top">
+                <span class="item-code">${item.codigo}</span>
+                <span class="status-badge status-${item.status}" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;">${item.status.replace(/_/g, ' ')}</span>
+              </div>
+              ${item.apelido ? `<div class="item-nick">${escapeHtml(item.apelido)}</div>` : ''}
+              <div class="item-status">${escapeHtml(item.descricaoStatus)}</div>
+            </div>
+            <div class="item-footer">
+              <span>🔔 ${item.webhookUrl ? 'Webhook Ativo' : 'Alertas Locais'}</span>
+              <button class="btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="removeMonitored(event, '${item.codigo}')">Remover</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Erro ao carregar monitorados:', err);
+      }
+    }
+
+    async function removeMonitored(e, code) {
+      e.stopPropagation();
+      if (!confirm(`Remover ${code} do monitoramento?`)) return;
+      await fetch(`/api/v1/monitorar/${code}`, { method: 'DELETE' });
+      loadMonitored();
+    }
+
+    async function checkMonitoredNow() {
+      const btn = event.target;
+      btn.textContent = 'Verificando...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/v1/monitorar/verificar', { method: 'POST' });
+        const data = await res.json();
+        alert(`Verificação concluída! ${data.checked} pacotes verificados, ${data.updated} atualizados.`);
+        loadMonitored();
+      } catch (err) {
+        alert('Erro ao verificar: ' + err.message);
+      } finally {
+        btn.textContent = '⚡ Verificar Agora';
+        btn.disabled = false;
+      }
+    }
+
+    function quickTrack(code, nick) {
+      document.getElementById('trackingCode').value = code;
+      document.getElementById('trackingNick').value = nick || '';
+      switchTab('search');
+      document.getElementById('trackForm').dispatchEvent(new Event('submit'));
+    }
+
+    // --- Modal Management ---
+    function openMonitorModal() {
+      if (!currentData) return;
+      document.getElementById('modalCode').value = currentData.codigo;
+      document.getElementById('modalNick').value = document.getElementById('resNick').textContent || '';
+      document.getElementById('monitorModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('monitorModal').style.display = 'none';
+    }
+
+    function closeModalOnBg(e) {
+      if (e.target.id === 'monitorModal') closeModal();
+    }
+
+    async function handleSaveMonitoring(e) {
+      e.preventDefault();
+      const codigo = document.getElementById('modalCode').value;
+      const apelido = document.getElementById('modalNick').value;
+      const webhookUrl = document.getElementById('modalWebhook').value;
+
+      try {
+        const res = await fetch('/api/v1/monitorar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            codigo,
+            apelido: apelido || undefined,
+            webhookUrl: webhookUrl || undefined,
+            notificarNavegador: true
+          })
+        });
+        const json = await res.json();
+        if (json.sucesso) {
+          alert('Pacote cadastrado para monitoramento com sucesso!');
+          closeModal();
+          loadMonitored();
+        } else {
+          alert('Erro: ' + (json.erro || 'Falha ao salvar'));
+        }
+      } catch (err) {
+        alert('Erro: ' + err.message);
+      }
+    }
+
+    // --- Browser Notifications API ---
+    function checkBrowserNotificationState() {
+      if (!('Notification' in window)) {
+        document.getElementById('btnBrowserNotify').style.display = 'none';
+        return;
+      }
+      if (Notification.permission === 'granted') {
+        document.getElementById('notifyStatusText').textContent = 'Notificações Ativas';
+        document.getElementById('btnBrowserNotify').style.borderColor = 'rgba(0, 229, 117, 0.4)';
+        document.getElementById('btnBrowserNotify').style.color = '#00e575';
+      }
+    }
+
+    async function requestBrowserNotificationPermission() {
+      if (!('Notification' in window)) {
+        alert('Seu navegador não suporta notificações de desktop.');
+        return;
+      }
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        new Notification('Correios Tracker API 📦', {
+          body: 'Notificações ativadas! Você será avisado quando suas encomendas mudarem de status.',
+          icon: '/favicon.ico'
+        });
+        checkBrowserNotificationState();
+      }
+    }
+
+    function sendDesktopNotification(title, message) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+          body: message,
+          icon: '/favicon.ico'
+        });
+      }
+    }
+
+    // Client background polling for monitored packages when tab is open
+    function startBackgroundPolling() {
+      setInterval(async () => {
+        if (monitoredList.length === 0) return;
+        try {
+          const res = await fetch('/api/v1/monitorar/verificar', { method: 'POST' });
+          const data = await res.json();
+          if (data.updated > 0) {
+            sendDesktopNotification('📦 Correios Tracker', `${data.updated} encomenda(s) tiveram novas atualizações de status!`);
+            loadMonitored();
+          }
+        } catch (e) {
+          // ignore
+        }
+      }, 5 * 60 * 1000); // every 5 minutes
+    }
+
     function formatDate(iso) {
       if (!iso) return '-';
       try {
@@ -778,6 +1277,19 @@
         return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       } catch {
         return iso;
+      }
+    }
+
+    function formatRelative(iso) {
+      if (!iso) return '';
+      try {
+        const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+        if (diff < 60) return 'agora';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m atrás`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h atrás`;
+        return `${Math.floor(diff / 86400)}d atrás`;
+      } catch {
+        return '';
       }
     }
 

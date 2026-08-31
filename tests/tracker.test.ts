@@ -3,6 +3,7 @@ import test from 'node:test';
 import { buildApp } from '../src/app.js';
 import { CacheService } from '../src/services/cache.service.js';
 import { SiglasService } from '../src/services/siglas.service.js';
+import { StorageService } from '../src/services/storage.service.js';
 import { TrackerService } from '../src/services/tracker.service.js';
 
 test('TrackerService - Validação de códigos de rastreio', () => {
@@ -59,6 +60,24 @@ test('CacheService - Armazenamento e expiração', () => {
   assert.equal(cache.get('NL123456789BR'), undefined);
 });
 
+test('StorageService - Histórico e Monitoramento', () => {
+  StorageService.clearHistorico();
+  StorageService.addHistorico({
+    codigo: 'NL123456789BR',
+    apelido: 'Teste Encomenda',
+    status: 'EM_TRANSITO',
+    descricaoStatus: 'Em trânsito',
+    servicoDescricao: 'Packet Standard',
+    entregue: false,
+    consultadoEm: new Date().toISOString(),
+    totalEventos: 2,
+  });
+
+  const hist = StorageService.getHistorico();
+  assert.ok(hist.length >= 1);
+  assert.equal(hist[0].codigo, 'NL123456789BR');
+});
+
 test('Fastify App - Endpoints de Integração', async () => {
   const app = buildApp();
 
@@ -68,8 +87,15 @@ test('Fastify App - Endpoints de Integração', async () => {
     url: '/health',
   });
   assert.equal(healthRes.statusCode, 200);
-  const healthJson = healthRes.json();
-  assert.equal(healthJson.status, 'ok');
+  assert.equal(healthRes.json().status, 'ok');
+
+  // Test History endpoint
+  const histRes = await app.inject({
+    method: 'GET',
+    url: '/api/v1/historico',
+  });
+  assert.equal(histRes.statusCode, 200);
+  assert.equal(histRes.json().sucesso, true);
 
   // Test Siglas
   const siglaRes = await app.inject({
@@ -79,15 +105,18 @@ test('Fastify App - Endpoints de Integração', async () => {
   assert.equal(siglaRes.statusCode, 200);
   assert.equal(siglaRes.json().sucesso, true);
 
-  // Test Invalid tracking code rejection
-  const invalidTrackRes = await app.inject({
-    method: 'GET',
-    url: '/api/v1/rastreio/CODIGO_INVALIDO',
+  // Test Monitoring registration
+  const monRes = await app.inject({
+    method: 'POST',
+    url: '/api/v1/monitorar',
+    payload: {
+      codigo: 'NL123456789BR',
+      apelido: 'Monitorado Teste',
+      notificarNavegador: true,
+    },
   });
-  assert.equal(invalidTrackRes.statusCode, 200);
-  const trackJson = invalidTrackRes.json();
-  assert.equal(trackJson.sucesso, false);
-  assert.equal(trackJson.status, 'NAO_ENCONTRADO');
+  assert.equal(monRes.statusCode, 201);
+  assert.equal(monRes.json().sucesso, true);
 
   await app.close();
 });

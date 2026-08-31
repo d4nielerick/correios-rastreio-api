@@ -1,0 +1,28 @@
+{
+  "historico": [
+    {
+      "codigo": "NL123456789BR",
+      "status": "NAO_ENCONTRADO",
+      "descricaoStatus": "Não foi possível obter dados no momento ou objeto ainda não postado.",
+      "servicoDescricao": "Packet Standard / Prime",
+      "entregue": false,
+      "consultadoEm": "2026-08-31T13:38:20.581Z",
+      "totalEventos": 0
+    }
+  ],
+  "monitorados": {
+    "NL123456789BR": {
+      "codigo": "NL123456789BR",
+      "apelido": "Monitorado Teste",
+      "status": "NAO_ENCONTRADO",
+      "descricaoStatus": "Não foi possível obter dados no momento ou objeto ainda não postado.",
+      "entregue": false,
+      "ultimoEventoData": null,
+      "notificarNavegador": true,
+      "criadoEm": "2026-08-31T13:38:20.581Z",
+      "atualizadoEm": "2026-08-31T13:38:20.581Z",
+      "ultimaVerificacao": "2026-08-31T13:38:20.581Z",
+      "totalEventos": 0
+    }
+  }
+}
