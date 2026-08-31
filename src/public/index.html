@@ -54,7 +54,7 @@
 
     header {
       text-align: center;
-      margin-bottom: 2.5rem;
+      margin-bottom: 2.25rem;
     }
 
     .header-badges {
@@ -98,26 +98,6 @@
     .notify-tag:hover {
       background: rgba(168, 85, 247, 0.25);
       transform: translateY(-1px);
-    }
-
-    .config-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: rgba(255, 255, 255, 0.06);
-      color: #cbd5e1;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 0.4rem 0.9rem;
-      border-radius: 9999px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .config-tag:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: #fff;
     }
 
     h1 {
@@ -194,7 +174,7 @@
       border-radius: var(--radius-lg);
       padding: 1.75rem;
       box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
 
     .input-group {
@@ -298,6 +278,65 @@
       background: rgba(255, 204, 0, 0.15);
       border-color: rgba(255, 204, 0, 0.3);
       color: var(--accent-yellow);
+    }
+
+    /* Home Quick History Strip */
+    .home-history-strip {
+      background: rgba(12, 15, 23, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      margin-bottom: 2rem;
+      display: none;
+    }
+
+    .home-history-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .home-history-chips {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .history-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.75rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .history-chip:hover {
+      background: rgba(255, 204, 0, 0.15);
+      border-color: rgba(255, 204, 0, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .chip-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .chip-nick {
+      font-size: 0.8rem;
+      color: var(--accent-yellow);
+      font-weight: 600;
     }
 
     /* Result Card */
@@ -837,9 +876,6 @@
         <div class="notify-tag" id="btnBrowserNotify" onclick="requestBrowserNotificationPermission()">
           <span>🔔</span> <span id="notifyStatusText">Ativar Notificações</span>
         </div>
-        <div class="config-tag" onclick="openConfigModal()">
-          <span>⚙️</span> <span id="apiStatusBadge">API Conectada</span>
-        </div>
       </div>
       <h1>Correios Tracker</h1>
       <p class="subtitle">Rastreamento de encomendas em tempo real com carimbo de data/hora exatos, histórico persistente e notificações.</p>
@@ -868,10 +904,10 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
-              <input type="text" id="trackingCode" placeholder="Código: Ex: NL123456789BR" autocomplete="off" required maxlength="30" />
+              <input type="text" id="trackingCode" placeholder="Código: Ex: OY739642509BR" autocomplete="off" required maxlength="30" />
             </div>
             <div class="input-wrapper nickname-wrapper">
-              <input type="text" id="trackingNick" placeholder="Apelido opcional (Ex: Teclado Shopee)" maxlength="40" />
+              <input type="text" id="trackingNick" placeholder="Apelido opcional (Ex: iPhone 15)" maxlength="40" />
             </div>
             <button type="submit" class="btn-search" id="submitBtn">
               <span id="btnText">Rastrear</span>
@@ -881,12 +917,21 @@
         </form>
 
         <div class="quick-samples">
-          <span>Formatos suportados:</span>
+          <span>Exemplos rápidos:</span>
+          <span class="sample-pill" onclick="setSample('OY')">OY (SEDEX)</span>
           <span class="sample-pill" onclick="setSample('NL')">NL (Packet Standard)</span>
           <span class="sample-pill" onclick="setSample('QB')">QB (SEDEX PJ)</span>
           <span class="sample-pill" onclick="setSample('PA')">PA (PAC)</span>
-          <span class="sample-pill" onclick="setSample('NM')">NM (Mini Envios)</span>
         </div>
+      </div>
+
+      <!-- Quick Recent Searches Strip on Home Tab -->
+      <div class="home-history-strip" id="homeHistoryStrip">
+        <div class="home-history-title">
+          <span>📋 Suas Consultas Recentes:</span>
+          <span style="font-size: 0.75rem; cursor: pointer; color: var(--accent-yellow);" onclick="switchTab('history')">Ver todas →</span>
+        </div>
+        <div class="home-history-chips" id="homeHistoryChips"></div>
       </div>
 
       <!-- Result Area -->
@@ -896,8 +941,8 @@
             <div class="package-title-area">
               <div class="package-nickname" id="resNick"></div>
               <div class="code-row">
-                <span class="package-code" id="resCode">NL123456789BR</span>
-                <span class="badge-service" id="resService">Packet Standard</span>
+                <span class="package-code" id="resCode">OY739642509BR</span>
+                <span class="badge-service" id="resService">SEDEX</span>
               </div>
             </div>
             <div id="resBadgeStatus" class="status-badge status-POSTADO">Em Trânsito</div>
@@ -986,29 +1031,6 @@
       <div class="history-grid" id="monitoredGrid"></div>
     </div>
 
-    <!-- Modal for API Configuration -->
-    <div class="modal-overlay" id="configModal" onclick="closeModalOnBg(event, 'configModal')">
-      <div class="modal-card">
-        <h3>⚙️ Configuração da API</h3>
-        <p class="modal-desc">Configure a URL do servidor backend para consultas e webhooks.</p>
-        
-        <form onsubmit="handleSaveApiConfig(event)">
-          <div class="modal-field">
-            <label>URL Base da API Backend</label>
-            <input type="text" id="apiBaseUrlInput" placeholder="http://localhost:3000 ou https://sua-api.onrender.com" />
-            <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-top: 0.35rem;">
-              Se estiver rodando no GitHub Pages, você pode apontar para a sua API hospedada ou para seu localhost.
-            </small>
-          </div>
-
-          <div class="modal-actions">
-            <button type="button" class="btn-secondary" onclick="closeModal('configModal')">Cancelar</button>
-            <button type="submit" class="btn-search" style="padding: 0.6rem 1.25rem; font-size: 0.9rem;">Salvar</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
     <!-- Modal for Webhooks & Monitoring -->
     <div class="modal-overlay" id="monitorModal" onclick="closeModalOnBg(event, 'monitorModal')">
       <div class="modal-card">
@@ -1022,7 +1044,7 @@
           </div>
           <div class="modal-field">
             <label>Apelido / Descrição</label>
-            <input type="text" id="modalNick" placeholder="Ex: Placa de Vídeo AliExpress" />
+            <input type="text" id="modalNick" placeholder="Ex: iPhone 15" />
           </div>
           <div class="modal-field">
             <label>Webhook URL (Opcional - Discord / Telegram / Custom)</label>
@@ -1038,7 +1060,7 @@
     </div>
 
     <footer>
-      <p>Correios Tracker • Disponível no GitHub Pages e API REST Node.js</p>
+      <p>Correios Tracker • Atualizações em tempo real com precisão de segundos</p>
     </footer>
   </div>
 
@@ -1047,45 +1069,29 @@
     let monitoredList = [];
     let historyList = [];
 
-    // Base API URL configuration (supports standalone GitHub Pages + custom backend)
-    function getApiBaseUrl() {
-      const saved = localStorage.getItem('CORREIOS_API_BASE_URL');
-      if (saved) return saved.replace(/\/$/, '');
-      // If hosted on GitHub Pages, default to localhost or direct
-      if (window.location.hostname.includes('github.io')) {
-        return 'http://localhost:3000';
-      }
-      return '';
-    }
-
-    function setApiBaseUrl(url) {
-      if (!url || url.trim() === '') {
-        localStorage.removeItem('CORREIOS_API_BASE_URL');
-      } else {
-        localStorage.setItem('CORREIOS_API_BASE_URL', url.trim().replace(/\/$/, ''));
-      }
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
       loadHistory();
       loadMonitored();
       checkBrowserNotificationState();
       startBackgroundPolling();
-      updateApiStatusBadge();
+
+      // Auto-populate last searched package if available
+      setTimeout(() => {
+        if (historyList && historyList.length > 0) {
+          const first = historyList[0];
+          document.getElementById('trackingCode').value = first.codigo;
+          if (first.apelido) document.getElementById('trackingNick').value = first.apelido;
+        }
+      }, 200);
     });
 
-    function updateApiStatusBadge() {
-      const base = getApiBaseUrl();
-      const badge = document.getElementById('apiStatusBadge');
-      if (base) {
-        badge.textContent = 'API: ' + base.replace(/^https?:\/\//, '').slice(0, 18);
-      } else {
-        badge.textContent = 'API Conectada';
-      }
-    }
-
     function setSample(prefix) {
-      document.getElementById('trackingCode').value = prefix + '123456789BR';
+      if (prefix === 'OY') {
+        document.getElementById('trackingCode').value = 'OY739642509BR';
+        document.getElementById('trackingNick').value = 'iPhone';
+      } else {
+        document.getElementById('trackingCode').value = prefix + '123456789BR';
+      }
       document.getElementById('trackingCode').focus();
     }
 
@@ -1096,6 +1102,7 @@
 
       if (tab === 'search') {
         document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        loadHistory();
       } else if (tab === 'history') {
         document.querySelectorAll('.tab-btn')[1].classList.add('active');
         document.getElementById('tab-history').classList.add('active');
@@ -1105,61 +1112,6 @@
         document.getElementById('tab-monitored').classList.add('active');
         loadMonitored();
       }
-    }
-
-    // Direct client-side tracking fallback for standalone GitHub Pages
-    async function directClientTracking(code) {
-      const url = `https://api.rastreadordepacotes.com.br/rastreio/${encodeURIComponent(code)}`;
-      const res = await fetch(url, {
-        headers: { Accept: 'application/json' }
-      });
-      if (!res.ok) throw new Error('Não foi possível consultar os Correios no momento.');
-      const json = await res.json();
-      const trackingData = json?.tracking?.[0];
-
-      const rawPositions = Array.isArray(trackingData?.Posicoes) ? trackingData.Posicoes : [];
-      const eventos = rawPositions.map(pos => {
-        const acao = pos.Acao || pos.Status || 'Atualização';
-        const detalhes = pos.DetalhesFormatado || '';
-        let origem, destino;
-        if (detalhes.includes('para')) {
-          const parts = detalhes.split(/para/i);
-          if (parts.length >= 2) {
-            origem = parts[0].replace(/de\s+/i, '').trim();
-            destino = parts[1].trim();
-          }
-        }
-        return {
-          data: pos.Data || new Date().toISOString(),
-          status: acao,
-          categoria: acao.toLowerCase().includes('entregue') ? 'ENTREGUE' : acao.toLowerCase().includes('saiu') ? 'SAIU_ENTREGA' : 'EM_TRANSITO',
-          detalhes,
-          origem,
-          destino,
-          local: destino || origem || undefined
-        };
-      });
-
-      const isDelivered = eventos.some(e => e.categoria === 'ENTREGUE');
-      const now = new Date();
-
-      return {
-        codigo: code,
-        sucesso: true,
-        servico: { sigla: code.slice(0, 2), descricao: 'Objeto Correios' },
-        status: isDelivered ? 'ENTREGUE' : (eventos[0]?.categoria || 'NAO_ENCONTRADO'),
-        descricaoStatus: eventos[0]?.status || 'Objeto ainda sem movimentações registradas.',
-        entregue: isDelivered,
-        diasEmTransito: 0,
-        dataPostagem: eventos[eventos.length - 1]?.data || null,
-        dataEntrega: isDelivered ? eventos[0]?.data : null,
-        totalEventos: eventos.length,
-        ultimoEvento: eventos[0] || null,
-        eventos,
-        consultadoEm: now.toISOString(),
-        consultadoEmFormatado: now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR'),
-        cache: false
-      };
     }
 
     async function handleTrack(e) {
@@ -1179,23 +1131,12 @@
       spinner.style.display = 'block';
 
       try {
-        const base = getApiBaseUrl();
-        let data;
-
-        try {
-          const url = `${base}/api/v1/rastreio/${encodeURIComponent(code)}${nick ? '?apelido=' + encodeURIComponent(nick) : ''}`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          data = await res.json();
-        } catch (apiErr) {
-          // If backend API is not responding, fallback to direct client-side fetch
-          console.warn('Backend API não respondeu, tentando consulta direta:', apiErr.message);
-          data = await directClientTracking(code);
-        }
-
+        const url = `/api/v1/rastreio/${encodeURIComponent(code)}${nick ? '?apelido=' + encodeURIComponent(nick) : ''}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
         currentData = data;
         renderResult(data, nick);
-        saveLocalHistory(data, nick);
         loadHistory();
       } catch (err) {
         alert('Erro ao consultar encomenda: ' + err.message);
@@ -1276,48 +1217,31 @@
       container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // --- LocalStorage History Sync ---
-    function saveLocalHistory(data, nick) {
-      try {
-        const item = {
-          codigo: data.codigo,
-          apelido: nick || undefined,
-          status: data.status,
-          descricaoStatus: data.descricaoStatus,
-          servicoDescricao: data.servico?.descricao || 'Correios',
-          entregue: data.entregue,
-          consultadoEm: data.consultadoEm,
-          consultadoEmFormatado: data.consultadoEmFormatado || formatDate(data.consultadoEm),
-          totalEventos: data.totalEventos
-        };
-        let local = JSON.parse(localStorage.getItem('CORREIOS_HISTORY') || '[]');
-        local = local.filter(h => h.codigo !== item.codigo);
-        local.unshift(item);
-        if (local.length > 50) local = local.slice(0, 50);
-        localStorage.setItem('CORREIOS_HISTORY', JSON.stringify(local));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
+    // --- History Loading ---
     async function loadHistory() {
       try {
-        const base = getApiBaseUrl();
-        let list = [];
-        try {
-          const res = await fetch(`${base}/api/v1/historico`);
-          if (res.ok) {
-            const data = await res.json();
-            list = data.historico || [];
-          }
-        } catch {
-          // Fallback to localStorage
-          list = JSON.parse(localStorage.getItem('CORREIOS_HISTORY') || '[]');
-        }
-
-        historyList = list;
+        const res = await fetch('/api/v1/historico');
+        const data = await res.json();
+        historyList = data.historico || [];
         document.getElementById('historyCount').textContent = historyList.length;
 
+        // Render Home Quick History Strip
+        const homeStrip = document.getElementById('homeHistoryStrip');
+        const homeChips = document.getElementById('homeHistoryChips');
+        if (historyList.length > 0) {
+          homeStrip.style.display = 'block';
+          homeChips.innerHTML = historyList.slice(0, 5).map(item => `
+            <div class="history-chip" onclick="quickTrack('${item.codigo}', '${item.apelido || ''}')">
+              <span class="chip-code">${item.codigo}</span>
+              ${item.apelido ? `<span class="chip-nick">(${escapeHtml(item.apelido)})</span>` : ''}
+              <span class="status-badge status-${item.status}" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">${item.status.replace(/_/g, ' ')}</span>
+            </div>
+          `).join('');
+        } else {
+          homeStrip.style.display = 'none';
+        }
+
+        // Render Full History Grid on History Tab
         const grid = document.getElementById('historyGrid');
         if (!grid) return;
 
@@ -1357,30 +1281,16 @@
 
     async function clearHistory() {
       if (!confirm('Deseja realmente limpar todo o histórico de consultas?')) return;
-      try {
-        const base = getApiBaseUrl();
-        await fetch(`${base}/api/v1/historico`, { method: 'DELETE' });
-      } catch {}
-      localStorage.removeItem('CORREIOS_HISTORY');
+      await fetch('/api/v1/historico', { method: 'DELETE' });
       loadHistory();
     }
 
     // --- Monitored Loading ---
     async function loadMonitored() {
       try {
-        const base = getApiBaseUrl();
-        let list = [];
-        try {
-          const res = await fetch(`${base}/api/v1/monitorar`);
-          if (res.ok) {
-            const data = await res.json();
-            list = data.monitorados || [];
-          }
-        } catch {
-          list = JSON.parse(localStorage.getItem('CORREIOS_MONITORED') || '[]');
-        }
-
-        monitoredList = list;
+        const res = await fetch('/api/v1/monitorar');
+        const data = await res.json();
+        monitoredList = data.monitorados || [];
         document.getElementById('monitoredCount').textContent = monitoredList.length;
 
         const grid = document.getElementById('monitoredGrid');
@@ -1424,13 +1334,7 @@
     async function removeMonitored(e, code) {
       e.stopPropagation();
       if (!confirm(`Remover ${code} do monitoramento?`)) return;
-      try {
-        const base = getApiBaseUrl();
-        await fetch(`${base}/api/v1/monitorar/${code}`, { method: 'DELETE' });
-      } catch {}
-      let local = JSON.parse(localStorage.getItem('CORREIOS_MONITORED') || '[]');
-      local = local.filter(p => p.codigo !== code);
-      localStorage.setItem('CORREIOS_MONITORED', JSON.stringify(local));
+      await fetch(`/api/v1/monitorar/${code}`, { method: 'DELETE' });
       loadMonitored();
     }
 
@@ -1439,8 +1343,7 @@
       btn.textContent = 'Verificando...';
       btn.disabled = true;
       try {
-        const base = getApiBaseUrl();
-        const res = await fetch(`${base}/api/v1/monitorar/verificar`, { method: 'POST' });
+        const res = await fetch('/api/v1/monitorar/verificar', { method: 'POST' });
         const data = await res.json();
         alert(`Verificação concluída! ${data.checked} pacotes verificados, ${data.updated} atualizados.`);
         loadMonitored();
@@ -1460,22 +1363,6 @@
     }
 
     // --- Modal Management ---
-    function openConfigModal() {
-      document.getElementById('apiBaseUrlInput').value = getApiBaseUrl();
-      document.getElementById('configModal').style.display = 'flex';
-    }
-
-    function handleSaveApiConfig(e) {
-      e.preventDefault();
-      const val = document.getElementById('apiBaseUrlInput').value;
-      setApiBaseUrl(val);
-      updateApiStatusBadge();
-      closeModal('configModal');
-      loadHistory();
-      loadMonitored();
-      alert('Configurações da API salvas com sucesso!');
-    }
-
     function openMonitorModal() {
       if (!currentData) return;
       document.getElementById('modalCode').value = currentData.codigo;
@@ -1498,38 +1385,24 @@
       const webhookUrl = document.getElementById('modalWebhook').value;
 
       try {
-        const base = getApiBaseUrl();
-        try {
-          await fetch(`${base}/api/v1/monitorar`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              codigo,
-              apelido: apelido || undefined,
-              webhookUrl: webhookUrl || undefined,
-              notificarNavegador: true
-            })
-          });
-        } catch {}
-
-        // Also save to localStorage
-        let local = JSON.parse(localStorage.getItem('CORREIOS_MONITORED') || '[]');
-        local = local.filter(p => p.codigo !== codigo);
-        local.unshift({
-          codigo,
-          apelido: apelido || undefined,
-          status: currentData.status,
-          descricaoStatus: currentData.descricaoStatus,
-          entregue: currentData.entregue,
-          webhookUrl: webhookUrl || undefined,
-          ultimaVerificacao: new Date().toISOString(),
-          ultimaVerificacaoFormatada: new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR')
+        const res = await fetch('/api/v1/monitorar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            codigo,
+            apelido: apelido || undefined,
+            webhookUrl: webhookUrl || undefined,
+            notificarNavegador: true
+          })
         });
-        localStorage.setItem('CORREIOS_MONITORED', JSON.stringify(local));
-
-        alert('Pacote cadastrado para monitoramento com sucesso!');
-        closeModal('monitorModal');
-        loadMonitored();
+        const json = await res.json();
+        if (json.sucesso) {
+          alert('Pacote cadastrado para monitoramento com sucesso!');
+          closeModal('monitorModal');
+          loadMonitored();
+        } else {
+          alert('Erro: ' + (json.erro || 'Falha ao salvar'));
+        }
       } catch (err) {
         alert('Erro: ' + err.message);
       }
@@ -1576,8 +1449,7 @@
       setInterval(async () => {
         if (monitoredList.length === 0) return;
         try {
-          const base = getApiBaseUrl();
-          const res = await fetch(`${base}/api/v1/monitorar/verificar`, { method: 'POST' });
+          const res = await fetch('/api/v1/monitorar/verificar', { method: 'POST' });
           const data = await res.json();
           if (data.updated > 0) {
             sendDesktopNotification('📦 Correios Tracker', `${data.updated} encomenda(s) tiveram novas atualizações de status!`);

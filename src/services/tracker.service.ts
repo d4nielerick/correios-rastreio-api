@@ -28,8 +28,8 @@ export class TrackerService {
     };
     try {
       const formatted = new Intl.DateTimeFormat('pt-BR', options).format(date);
-      // Replace the comma or space between date and time with " às "
-      return formatted.replace(', ', ' às ').replace(' ', ' às ');
+      // Cleanly format date with single " às "
+      return formatted.replace(', ', ' às ').replace(' às às ', ' às ');
     } catch {
       return date.toLocaleString('pt-BR');
     }
@@ -280,7 +280,12 @@ export class TrackerService {
         const rawDate = pos.Data || pos.data || '';
         const isoDate = this.parseToIso(rawDate);
         const acao = pos.Acao || pos.acao || pos.Status || pos.status || 'Atualização';
-        const detalhes = pos.DetalhesFormatado || pos.detalhes || pos.Detalhes || '';
+        let detalhes = (pos.DetalhesFormatado || pos.detalhes || pos.Detalhes || '').replace(/[\r\n]+/g, ' - ').trim();
+
+        // If detalhes starts with acao, strip redundancy
+        if (detalhes.toLowerCase().startsWith(acao.toLowerCase())) {
+          detalhes = detalhes.slice(acao.length).replace(/^[\s\-:]+/, '').trim();
+        }
 
         let origem: string | undefined = undefined;
         let destino: string | undefined = undefined;
@@ -288,7 +293,7 @@ export class TrackerService {
         if (detalhes.includes('para')) {
           const parts = detalhes.split(/para/i);
           if (parts.length >= 2) {
-            origem = parts[0].replace(/de\s+/i, '').trim();
+            origem = parts[0].replace(/Saiu\s+de\s+/i, '').replace(/de\s+/i, '').trim();
             destino = parts[1].trim();
           }
         }
