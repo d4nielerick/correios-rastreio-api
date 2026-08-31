@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  correios-tracker:
+    build: .
+    container_name: correios-rastreio-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - NODE_ENV=production
+      - CACHE_TTL_MS=300000
+      - CACHE_MAX_ITEMS=1000
+      - REQUEST_TIMEOUT_MS=15000
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
