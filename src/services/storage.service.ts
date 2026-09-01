@@ -1,10 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { HistoryItem, MonitoredPackage } from '../types/tracking.types.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 interface StorageData {
   historico: HistoryItem[];
@@ -12,8 +8,14 @@ interface StorageData {
 }
 
 export class StorageService {
-  private static readonly DATA_DIR = path.resolve(__dirname, '../../data');
-  private static readonly FILE_PATH = path.resolve(this.DATA_DIR, 'storage.json');
+  private static readonly isServerless =
+    !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME || !!process.env.LAMBDA_TASK_ROOT;
+
+  private static readonly DATA_DIR = StorageService.isServerless
+    ? '/tmp/data'
+    : path.resolve(process.cwd(), 'data');
+
+  private static readonly FILE_PATH = path.resolve(StorageService.DATA_DIR, 'storage.json');
   private static data: StorageData = { historico: [], monitorados: {} };
   private static isInitialized = false;
 
@@ -33,7 +35,8 @@ export class StorageService {
       } else {
         this.save();
       }
-    } catch {
+    } catch (err) {
+      console.warn('[StorageService] Falha ao inicializar armazenamento local em arquivo (usando memória):', err);
       this.data = { historico: [], monitorados: {} };
     }
 
@@ -47,7 +50,7 @@ export class StorageService {
       }
       fs.writeFileSync(this.FILE_PATH, JSON.stringify(this.data, null, 2), 'utf-8');
     } catch (err) {
-      console.error('Erro ao salvar storage:', err);
+      console.warn('[StorageService] Aviso: Não foi possível persistir storage no disco:', err);
     }
   }
 

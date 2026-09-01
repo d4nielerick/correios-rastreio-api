@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Correios Tracker | Rastreamento, Histórico e Notificações</title>
+  <meta name="description" content="Rastreamento de encomendas dos Correios em tempo real com histórico de consultas e notificações de mudança de status.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at 50% 0%, #171b26 0%, #0c0e14 100%);
+      --card-bg: rgba(22, 27, 38, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(255, 204, 0, 0.3);
+      --accent-yellow: #ffcc00;
+      --accent-blue: #0088ff;
+      --accent-green: #00e575;
+      --accent-orange: #ff9900;
+      --accent-red: #ff4757;
+      --accent-purple: #a855f7;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --timeline-line: rgba(255, 255, 255, 0.12);
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 940px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.25rem;
+    }
+
+    .header-badges {
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .logo-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 204, 0, 0.1);
+      color: var(--accent-yellow);
+      border: 1px solid rgba(255, 204, 0, 0.25);
+      padding: 0.4rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .notify-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(168, 85, 247, 0.12);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      padding: 0.4rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .notify-tag:hover {
+      background: rgba(168, 85, 247, 0.25);
+      transform: translateY(-1px);
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 620px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Tabs Bar */
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 0.75rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-yellow);
+      background: rgba(255, 204, 0, 0.12);
+      border: 1px solid rgba(255, 204, 0, 0.25);
+    }
+
+    .tab-count {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.1rem 0.45rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+    }
+
+    .tab-btn.active .tab-count {
+      background: rgba(255, 204, 0, 0.3);
+      color: #fff;
+    }
+
+    /* Search Section */
+    .search-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .input-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      background: rgba(12, 15, 23, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem 1rem 3rem;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-wrapper input:focus {
+      border-color: var(--accent-yellow);
+      box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.15);
+      background: rgba(12, 15, 23, 0.95);
+    }
+
+    .input-wrapper.nickname-wrapper {
+      flex: 0.8;
+      min-width: 180px;
+    }
+
+    .input-wrapper.nickname-wrapper input {
+      text-transform: none;
+      font-family: inherit;
+      font-size: 0.95rem;
+      padding-left: 1.25rem;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 1.1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    button.btn-search {
+      background: linear-gradient(135deg, #ffcc00 0%, #e6b800 100%);
+      color: #0c0e14;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 1rem 1.75rem;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 20px -6px rgba(255, 204, 0, 0.4);
+    }
+
+    button.btn-search:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px -6px rgba(255, 204, 0, 0.5);
+    }
+
+    .quick-samples {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .sample-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-sm);
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.15s ease;
+    }
+
+    .sample-pill:hover {
+      background: rgba(255, 204, 0, 0.15);
+      border-color: rgba(255, 204, 0, 0.3);
+      color: var(--accent-yellow);
+    }
+
+    /* Home Quick History Strip */
+    .home-history-strip {
+      background: rgba(12, 15, 23, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      margin-bottom: 2rem;
+      display: none;
+    }
+
+    .home-history-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .home-history-chips {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .history-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.75rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .history-chip:hover {
+      background: rgba(255, 204, 0, 0.15);
+      border-color: rgba(255, 204, 0, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .chip-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .chip-nick {
+      font-size: 0.8rem;
+      color: var(--accent-yellow);
+      font-weight: 600;
+    }
+
+    /* Result Card */
+    .result-container {
+      display: none;
+      margin-bottom: 2rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .package-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+
+    .package-header {
+      padding: 1.5rem 1.75rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .package-title-area {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .code-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .package-nickname {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .package-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--accent-yellow);
+    }
+
+    .badge-service {
+      background: rgba(0, 136, 255, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid rgba(0, 136, 255, 0.3);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .status-ENTREGUE {
+      background: rgba(0, 229, 117, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(0, 229, 117, 0.35);
+    }
+
+    .status-EM_TRANSITO, .status-POSTADO {
+      background: rgba(0, 136, 255, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid rgba(0, 136, 255, 0.35);
+    }
+
+    .status-SAIU_ENTREGA {
+      background: rgba(255, 204, 0, 0.15);
+      color: var(--accent-yellow);
+      border: 1px solid rgba(255, 204, 0, 0.35);
+    }
+
+    .status-TRIBUTADO, .status-FISCALIZACAO {
+      background: rgba(255, 153, 0, 0.15);
+      color: var(--accent-orange);
+      border: 1px solid rgba(255, 153, 0, 0.35);
+    }
+
+    .status-NAO_ENCONTRADO, .status-EXTRAVIADO, .status-DEVOLVIDO {
+      background: rgba(255, 71, 87, 0.15);
+      color: var(--accent-red);
+      border: 1px solid rgba(255, 71, 87, 0.35);
+    }
+
+    .status-OUTRO, .status-AGUARDANDO_RETIRADA {
+      background: rgba(148, 163, 184, 0.15);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    /* Live Timestamp Bar */
+    .timestamp-highlight-bar {
+      background: linear-gradient(90deg, rgba(0, 229, 117, 0.1) 0%, rgba(0, 136, 255, 0.08) 100%);
+      border-bottom: 1px solid rgba(0, 229, 117, 0.2);
+      padding: 0.65rem 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .live-pulse {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--accent-green);
+      font-weight: 700;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 117, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(0, 229, 117, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 229, 117, 0); }
+    }
+
+    .timestamp-exact {
+      font-family: 'JetBrains Mono', monospace;
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+
+    .meta-bar {
+      padding: 1.1rem 1.75rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--card-border);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .meta-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .meta-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+
+    /* Timeline */
+    .timeline {
+      padding: 2rem 1.75rem;
+      position: relative;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 2.75rem;
+      top: 2.5rem;
+      bottom: 2.5rem;
+      width: 2px;
+      background: var(--timeline-line);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-left: 3rem;
+      margin-bottom: 2rem;
+    }
+
+    .timeline-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: 0.65rem;
+      top: 0.2rem;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #334155;
+      border: 3px solid #0f172a;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+      z-index: 2;
+    }
+
+    .timeline-item.first .timeline-dot {
+      background: var(--accent-yellow);
+      box-shadow: 0 0 12px rgba(255, 204, 0, 0.8), 0 0 0 2px var(--accent-yellow);
+    }
+
+    .timeline-item.delivered .timeline-dot {
+      background: var(--accent-green);
+      box-shadow: 0 0 12px rgba(0, 229, 117, 0.8), 0 0 0 2px var(--accent-green);
+    }
+
+    .timeline-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .timeline-status {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.35rem;
+    }
+
+    .timeline-details {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    .timeline-route {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.4rem;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+    }
+
+    /* Actions */
+    .card-footer-actions {
+      padding: 1rem 1.75rem;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .footer-btn-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .btn-notify {
+      background: rgba(168, 85, 247, 0.15);
+      color: #d8b4fe;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .btn-notify:hover {
+      background: rgba(168, 85, 247, 0.25);
+      color: #fff;
+    }
+
+    /* History & Monitored List */
+    .history-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      display: none;
+    }
+
+    .history-card.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .history-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .history-item-box {
+      background: rgba(12, 15, 23, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .history-item-box:hover {
+      border-color: rgba(255, 204, 0, 0.4);
+      transform: translateY(-2px);
+      background: rgba(12, 15, 23, 0.85);
+    }
+
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .item-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .item-nick {
+      font-size: 0.85rem;
+      color: var(--accent-yellow);
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+
+    .item-status {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      line-height: 1.4;
+    }
+
+    .item-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+      color: #64748b;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 0.5rem;
+    }
+
+    .item-footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item-time {
+      color: #38bdf8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      stroke: #475569;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+
+    .modal-card {
+      background: #131722;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      max-width: 500px;
+      width: 100%;
+      padding: 1.75rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-card h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+
+    .modal-field {
+      margin-bottom: 1rem;
+    }
+
+    .modal-field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 0.35rem;
+    }
+
+    .modal-field input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      color: #fff;
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .loading-spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(0, 0, 0, 0.2);
+      border-top-color: #0c0e14;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    footer {
+      margin-top: 3rem;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-badges">
+        <div class="logo-tag">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+          Correios Tracker
+        </div>
+        <div class="notify-tag" id="btnBrowserNotify" onclick="requestBrowserNotificationPermission()">
+          <span>🔔</span> <span id="notifyStatusText">Ativar Notificações</span>
+        </div>
+      </div>
+      <h1>Correios Tracker</h1>
+      <p class="subtitle">Rastreamento de encomendas em tempo real com carimbo de data/hora exatos, histórico persistente e notificações.</p>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('search')">
+        🔍 Consultar Pacote
+      </button>
+      <button class="tab-btn" onclick="switchTab('history')">
+        🕒 Histórico de Consultas <span class="tab-count" id="historyCount">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('monitored')">
+        🔔 Pacotes Monitorados <span class="tab-count" id="monitoredCount">0</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: Search Form -->
+    <div id="tab-search">
+      <div class="search-card">
+        <form id="trackForm" onsubmit="handleTrack(event)">
+          <div class="input-group">
+            <div class="input-wrapper">
+              <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="trackingCode" placeholder="Código: Ex: OY739642509BR" autocomplete="off" required maxlength="30" />
+            </div>
+            <div class="input-wrapper nickname-wrapper">
+              <input type="text" id="trackingNick" placeholder="Apelido opcional (Ex: iPhone 15)" maxlength="40" />
+            </div>
+            <button type="submit" class="btn-search" id="submitBtn">
+              <span id="btnText">Rastrear</span>
+              <div class="loading-spinner" id="spinner"></div>
+            </button>
+          </div>
+        </form>
+
+        <div class="quick-samples">
+          <span>Exemplos rápidos:</span>
+          <span class="sample-pill" onclick="setSample('OY')">OY (SEDEX)</span>
+          <span class="sample-pill" onclick="setSample('NL')">NL (Packet Standard)</span>
+          <span class="sample-pill" onclick="setSample('QB')">QB (SEDEX PJ)</span>
+          <span class="sample-pill" onclick="setSample('PA')">PA (PAC)</span>
+        </div>
+      </div>
+
+      <!-- Quick Recent Searches Strip on Home Tab -->
+      <div class="home-history-strip" id="homeHistoryStrip">
+        <div class="home-history-title">
+          <span>📋 Suas Consultas Recentes:</span>
+          <span style="font-size: 0.75rem; cursor: pointer; color: var(--accent-yellow);" onclick="switchTab('history')">Ver todas →</span>
+        </div>
+        <div class="home-history-chips" id="homeHistoryChips"></div>
+      </div>
+
+      <!-- Result Area -->
+      <div class="result-container" id="resultContainer">
+        <div class="package-card">
+          <div class="package-header">
+            <div class="package-title-area">
+              <div class="package-nickname" id="resNick"></div>
+              <div class="code-row">
+                <span class="package-code" id="resCode">OY739642509BR</span>
+                <span class="badge-service" id="resService">SEDEX</span>
+              </div>
+            </div>
+            <div id="resBadgeStatus" class="status-badge status-POSTADO">Em Trânsito</div>
+          </div>
+
+          <!-- Highlight bar showing exact live query time -->
+          <div class="timestamp-highlight-bar">
+            <div class="live-pulse">
+              <div class="pulse-dot"></div>
+              <span>Informações Atualizadas</span>
+            </div>
+            <div>
+              <span style="color: var(--text-muted);">Horário da Consulta: </span>
+              <span class="timestamp-exact" id="resExactQueryTime">-</span>
+              <span style="color: #64748b; font-size: 0.8rem; margin-left: 0.35rem;" id="resRelativeQueryTime"></span>
+            </div>
+          </div>
+
+          <div class="meta-bar">
+            <div class="meta-item">
+              <span class="meta-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Status Atual
+              </span>
+              <span class="meta-value" id="resStatusDesc">-</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                Dias em Trânsito
+              </span>
+              <span class="meta-value" id="resDays">-</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                Data da Postagem
+              </span>
+              <span class="meta-value" id="resPostDate">-</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Origem do Dado
+              </span>
+              <span class="meta-value" id="resCacheSource">Tempo Real</span>
+            </div>
+          </div>
+
+          <div class="timeline" id="timelineContainer">
+            <!-- Timeline items inserted here -->
+          </div>
+
+          <div class="card-footer-actions">
+            <div class="footer-btn-group">
+              <button class="btn-secondary" onclick="copyJson()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Copiar JSON
+              </button>
+              <button class="btn-secondary btn-notify" onclick="openMonitorModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                Configurar Alerta / Webhook
+              </button>
+            </div>
+            <span style="font-size: 0.75rem; color: #64748b;" id="resConsultedAt"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: History List -->
+    <div id="tab-history" class="history-card">
+      <div class="history-header">
+        <h2>Histórico de Consultas Recentes</h2>
+        <button class="btn-secondary" onclick="clearHistory()">🗑️ Limpar Histórico</button>
+      </div>
+      <div class="history-grid" id="historyGrid"></div>
+    </div>
+
+    <!-- TAB 3: Monitored Packages -->
+    <div id="tab-monitored" class="history-card">
+      <div class="history-header">
+        <h2>Pacotes Monitorados com Notificações Ativas</h2>
+        <button class="btn-secondary" onclick="checkMonitoredNow()">⚡ Verificar Agora</button>
+      </div>
+      <div class="history-grid" id="monitoredGrid"></div>
+    </div>
+
+    <!-- Modal for Webhooks & Monitoring -->
+    <div class="modal-overlay" id="monitorModal" onclick="closeModalOnBg(event, 'monitorModal')">
+      <div class="modal-card">
+        <h3>🔔 Monitorar Encomenda</h3>
+        <p class="modal-desc">Receba notificações automáticas quando houver qualquer alteração de status (ex: saiu para entrega, entregue).</p>
+        
+        <form onsubmit="handleSaveMonitoring(event)">
+          <div class="modal-field">
+            <label>Código de Rastreio</label>
+            <input type="text" id="modalCode" readonly style="color: var(--accent-yellow); font-family: 'JetBrains Mono', monospace;" />
+          </div>
+          <div class="modal-field">
+            <label>Apelido / Descrição</label>
+            <input type="text" id="modalNick" placeholder="Ex: iPhone 15" />
+          </div>
+          <div class="modal-field">
+            <label>Webhook URL (Opcional - Discord / Telegram / Custom)</label>
+            <input type="url" id="modalWebhook" placeholder="https://discord.com/api/webhooks/..." />
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal('monitorModal')">Cancelar</button>
+            <button type="submit" class="btn-search" style="padding: 0.6rem 1.25rem; font-size: 0.9rem;">Salvar Alerta</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <footer>
+      <p>Correios Tracker • Atualizações em tempo real com precisão de segundos</p>
+    </footer>
+  </div>
+
+  <script>
+    let currentData = null;
+    let monitoredList = [];
+    let historyList = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadHistory();
+      loadMonitored();
+      checkBrowserNotificationState();
+      startBackgroundPolling();
+
+      // Auto-populate last searched package if available
+      setTimeout(() => {
+        if (historyList && historyList.length > 0) {
+          const first = historyList[0];
+          document.getElementById('trackingCode').value = first.codigo;
+          if (first.apelido) document.getElementById('trackingNick').value = first.apelido;
+        }
+      }, 200);
+    });
+
+    function setSample(prefix) {
+      if (prefix === 'OY') {
+        document.getElementById('trackingCode').value = 'OY739642509BR';
+        document.getElementById('trackingNick').value = 'iPhone';
+      } else {
+        document.getElementById('trackingCode').value = prefix + '123456789BR';
+      }
+      document.getElementById('trackingCode').focus();
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.history-card').forEach(c => c.classList.remove('active'));
+      document.getElementById('tab-search').style.display = tab === 'search' ? 'block' : 'none';
+
+      if (tab === 'search') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        loadHistory();
+      } else if (tab === 'history') {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('tab-history').classList.add('active');
+        loadHistory();
+      } else if (tab === 'monitored') {
+        document.querySelectorAll('.tab-btn')[2].classList.add('active');
+        document.getElementById('tab-monitored').classList.add('active');
+        loadMonitored();
+      }
+    }
+
+    async function handleTrack(e) {
+      e.preventDefault();
+      const codeInput = document.getElementById('trackingCode');
+      const nickInput = document.getElementById('trackingNick');
+      const code = codeInput.value.trim().toUpperCase();
+      const nick = nickInput.value.trim();
+      if (!code) return;
+
+      const btn = document.getElementById('submitBtn');
+      const btnText = document.getElementById('btnText');
+      const spinner = document.getElementById('spinner');
+
+      btn.disabled = true;
+      btnText.style.display = 'none';
+      spinner.style.display = 'block';
+
+      try {
+        const url = `/api/v1/rastreio/${encodeURIComponent(code)}${nick ? '?apelido=' + encodeURIComponent(nick) : ''}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        currentData = data;
+        renderResult(data, nick);
+        loadHistory();
+      } catch (err) {
+        alert('Erro ao consultar encomenda: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btnText.style.display = 'inline';
+        spinner.style.display = 'none';
+      }
+    }
+
+    function renderResult(data, customNick = '') {
+      const container = document.getElementById('resultContainer');
+      container.style.display = 'block';
+
+      const nickEl = document.getElementById('resNick');
+      if (customNick) {
+        nickEl.textContent = customNick;
+        nickEl.style.display = 'block';
+      } else {
+        nickEl.style.display = 'none';
+      }
+
+      document.getElementById('resCode').textContent = data.codigo || '-';
+      document.getElementById('resService').textContent = data.servico?.descricao || 'Correios';
+
+      const badge = document.getElementById('resBadgeStatus');
+      badge.className = `status-badge status-${data.status || 'OUTRO'}`;
+      badge.textContent = (data.status || 'STATUS').replace(/_/g, ' ');
+
+      const formattedTime = data.consultadoEmFormatado || formatDate(data.consultadoEm);
+      document.getElementById('resExactQueryTime').textContent = formattedTime;
+      document.getElementById('resRelativeQueryTime').textContent = `(${formatRelative(data.consultadoEm)})`;
+      document.getElementById('resConsultedAt').textContent = `🕒 Dados obtidos em: ${formattedTime}`;
+
+      document.getElementById('resStatusDesc').textContent = data.descricaoStatus || 'Sem informações';
+      document.getElementById('resDays').textContent = data.diasEmTransito !== undefined ? `${data.diasEmTransito} dias` : '-';
+      document.getElementById('resPostDate').textContent = data.dataPostagem ? formatDate(data.dataPostagem) : '-';
+      document.getElementById('resCacheSource').textContent = data.cache ? '⚡ Cache em Memória' : '🌐 Consulta Direta em Tempo Real';
+
+      const timeline = document.getElementById('timelineContainer');
+      timeline.innerHTML = '';
+
+      if (!data.eventos || data.eventos.length === 0) {
+        timeline.innerHTML = `
+          <div class="timeline-item first">
+            <div class="timeline-dot"></div>
+            <div class="timeline-status">Nenhuma movimentação registrada</div>
+            <div class="timeline-details">${data.descricaoStatus || 'O objeto pode ser recente e ainda não foi bipado no fluxo postal.'}</div>
+          </div>
+        `;
+        return;
+      }
+
+      data.eventos.forEach((event, index) => {
+        const isFirst = index === 0;
+        const isDelivered = event.categoria === 'ENTREGUE';
+        const itemClass = isDelivered ? 'timeline-item delivered' : isFirst ? 'timeline-item first' : 'timeline-item';
+
+        const routeHtml = (event.origem || event.destino) 
+          ? `<div class="timeline-route">
+              <span>📍 ${event.origem || ''}</span>
+              ${event.destino ? `<span>→ 🏁 ${event.destino}</span>` : ''}
+             </div>`
+          : (event.local ? `<div class="timeline-route"><span>📍 ${event.local}</span></div>` : '');
+
+        const item = document.createElement('div');
+        item.className = itemClass;
+        item.innerHTML = `
+          <div class="timeline-dot"></div>
+          <div class="timeline-date">${formatDate(event.data)}</div>
+          <div class="timeline-status">${escapeHtml(event.status)}</div>
+          ${event.detalhes ? `<div class="timeline-details">${escapeHtml(event.detalhes)}</div>` : ''}
+          ${routeHtml}
+        `;
+        timeline.appendChild(item);
+      });
+
+      container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // --- History Loading ---
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/v1/historico');
+        const data = await res.json();
+        historyList = data.historico || [];
+        document.getElementById('historyCount').textContent = historyList.length;
+
+        // Render Home Quick History Strip
+        const homeStrip = document.getElementById('homeHistoryStrip');
+        const homeChips = document.getElementById('homeHistoryChips');
+        if (historyList.length > 0) {
+          homeStrip.style.display = 'block';
+          homeChips.innerHTML = historyList.slice(0, 5).map(item => `
+            <div class="history-chip" onclick="quickTrack('${item.codigo}', '${item.apelido || ''}')">
+              <span class="chip-code">${item.codigo}</span>
+              ${item.apelido ? `<span class="chip-nick">(${escapeHtml(item.apelido)})</span>` : ''}
+              <span class="status-badge status-${item.status}" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">${item.status.replace(/_/g, ' ')}</span>
+            </div>
+          `).join('');
+        } else {
+          homeStrip.style.display = 'none';
+        }
+
+        // Render Full History Grid on History Tab
+        const grid = document.getElementById('historyGrid');
+        if (!grid) return;
+
+        if (historyList.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <p>Nenhuma consulta recente encontrada.</p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = historyList.map(item => `
+          <div class="history-item-box" onclick="quickTrack('${item.codigo}', '${item.apelido || ''}')">
+            <div>
+              <div class="item-top">
+                <span class="item-code">${item.codigo}</span>
+                <span class="status-badge status-${item.status}" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;">${item.status.replace(/_/g, ' ')}</span>
+              </div>
+              ${item.apelido ? `<div class="item-nick">${escapeHtml(item.apelido)}</div>` : ''}
+              <div class="item-status">${escapeHtml(item.descricaoStatus)}</div>
+            </div>
+            <div class="item-footer">
+              <div class="item-footer-row">
+                <span>${item.servicoDescricao || 'Correios'}</span>
+                <span>${formatRelative(item.consultadoEm)}</span>
+              </div>
+              <div class="item-time">🕒 ${item.consultadoEmFormatado || formatDate(item.consultadoEm)}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Erro ao carregar histórico:', err);
+      }
+    }
+
+    async function clearHistory() {
+      if (!confirm('Deseja realmente limpar todo o histórico de consultas?')) return;
+      await fetch('/api/v1/historico', { method: 'DELETE' });
+      loadHistory();
+    }
+
+    // --- Monitored Loading ---
+    async function loadMonitored() {
+      try {
+        const res = await fetch('/api/v1/monitorar');
+        const data = await res.json();
+        monitoredList = data.monitorados || [];
+        document.getElementById('monitoredCount').textContent = monitoredList.length;
+
+        const grid = document.getElementById('monitoredGrid');
+        if (!grid) return;
+
+        if (monitoredList.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              <p>Nenhum pacote em monitoramento no momento.</p>
+              <p style="font-size: 0.8rem; margin-top: 0.25rem;">Consulte um pacote e clique em "Configurar Alerta / Webhook".</p>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = monitoredList.map(item => `
+          <div class="history-item-box">
+            <div onclick="quickTrack('${item.codigo}', '${item.apelido || ''}')">
+              <div class="item-top">
+                <span class="item-code">${item.codigo}</span>
+                <span class="status-badge status-${item.status}" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;">${item.status.replace(/_/g, ' ')}</span>
+              </div>
+              ${item.apelido ? `<div class="item-nick">${escapeHtml(item.apelido)}</div>` : ''}
+              <div class="item-status">${escapeHtml(item.descricaoStatus)}</div>
+            </div>
+            <div class="item-footer">
+              <div class="item-footer-row">
+                <span>🔔 ${item.webhookUrl ? 'Webhook Ativo' : 'Alertas Locais'}</span>
+                <button class="btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="removeMonitored(event, '${item.codigo}')">Remover</button>
+              </div>
+              <div class="item-time">🕒 Última checagem: ${item.ultimaVerificacaoFormatada || formatDate(item.ultimaVerificacao)}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Erro ao carregar monitorados:', err);
+      }
+    }
+
+    async function removeMonitored(e, code) {
+      e.stopPropagation();
+      if (!confirm(`Remover ${code} do monitoramento?`)) return;
+      await fetch(`/api/v1/monitorar/${code}`, { method: 'DELETE' });
+      loadMonitored();
+    }
+
+    async function checkMonitoredNow() {
+      const btn = event.target;
+      btn.textContent = 'Verificando...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/v1/monitorar/verificar', { method: 'POST' });
+        const data = await res.json();
+        alert(`Verificação concluída! ${data.checked} pacotes verificados, ${data.updated} atualizados.`);
+        loadMonitored();
+      } catch (err) {
+        alert('Erro ao verificar: ' + err.message);
+      } finally {
+        btn.textContent = '⚡ Verificar Agora';
+        btn.disabled = false;
+      }
+    }
+
+    function quickTrack(code, nick) {
+      document.getElementById('trackingCode').value = code;
+      document.getElementById('trackingNick').value = nick || '';
+      switchTab('search');
+      document.getElementById('trackForm').dispatchEvent(new Event('submit'));
+    }
+
+    // --- Modal Management ---
+    function openMonitorModal() {
+      if (!currentData) return;
+      document.getElementById('modalCode').value = currentData.codigo;
+      document.getElementById('modalNick').value = document.getElementById('resNick').textContent || '';
+      document.getElementById('monitorModal').style.display = 'flex';
+    }
+
+    function closeModal(modalId = 'monitorModal') {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    function closeModalOnBg(e, modalId) {
+      if (e.target.id === modalId) closeModal(modalId);
+    }
+
+    async function handleSaveMonitoring(e) {
+      e.preventDefault();
+      const codigo = document.getElementById('modalCode').value;
+      const apelido = document.getElementById('modalNick').value;
+      const webhookUrl = document.getElementById('modalWebhook').value;
+
+      try {
+        const res = await fetch('/api/v1/monitorar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            codigo,
+            apelido: apelido || undefined,
+            webhookUrl: webhookUrl || undefined,
+            notificarNavegador: true
+          })
+        });
+        const json = await res.json();
+        if (json.sucesso) {
+          alert('Pacote cadastrado para monitoramento com sucesso!');
+          closeModal('monitorModal');
+          loadMonitored();
+        } else {
+          alert('Erro: ' + (json.erro || 'Falha ao salvar'));
+        }
+      } catch (err) {
+        alert('Erro: ' + err.message);
+      }
+    }
+
+    // --- Browser Notifications API ---
+    function checkBrowserNotificationState() {
+      if (!('Notification' in window)) {
+        document.getElementById('btnBrowserNotify').style.display = 'none';
+        return;
+      }
+      if (Notification.permission === 'granted') {
+        document.getElementById('notifyStatusText').textContent = 'Notificações Ativas';
+        document.getElementById('btnBrowserNotify').style.borderColor = 'rgba(0, 229, 117, 0.4)';
+        document.getElementById('btnBrowserNotify').style.color = '#00e575';
+      }
+    }
+
+    async function requestBrowserNotificationPermission() {
+      if (!('Notification' in window)) {
+        alert('Seu navegador não suporta notificações de desktop.');
+        return;
+      }
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        new Notification('Correios Tracker 📦', {
+          body: 'Notificações ativadas! Você será avisado quando suas encomendas mudarem de status.',
+          icon: '/favicon.ico'
+        });
+        checkBrowserNotificationState();
+      }
+    }
+
+    function sendDesktopNotification(title, message) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+          body: message,
+          icon: '/favicon.ico'
+        });
+      }
+    }
+
+    function startBackgroundPolling() {
+      setInterval(async () => {
+        if (monitoredList.length === 0) return;
+        try {
+          const res = await fetch('/api/v1/monitorar/verificar', { method: 'POST' });
+          const data = await res.json();
+          if (data.updated > 0) {
+            sendDesktopNotification('📦 Correios Tracker', `${data.updated} encomenda(s) tiveram novas atualizações de status!`);
+            loadMonitored();
+          }
+        } catch (e) {
+          // ignore
+        }
+      }, 5 * 60 * 1000);
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '-';
+      try {
+        const d = new Date(iso);
+        return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      } catch {
+        return iso;
+      }
+    }
+
+    function formatRelative(iso) {
+      if (!iso) return '';
+      try {
+        const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+        if (diff < 10) return 'agora mesmo';
+        if (diff < 60) return `${diff}s atrás`;
+        if (diff < 3600) return `${Math.floor(diff / 60)}min atrás`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h atrás`;
+        return `${Math.floor(diff / 86400)}d atrás`;
+      } catch {
+        return '';
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function copyJson() {
+      if (!currentData) return;
+      navigator.clipboard.writeText(JSON.stringify(currentData, null, 2));
+      alert('JSON copiado para a área de transferência!');
+    }
+  </script>
+</body>
+</html>

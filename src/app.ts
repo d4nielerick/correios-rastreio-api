@@ -1,13 +1,8 @@
 import cors from '@fastify/cors';
-import fastifyStatic from '@fastify/static';
 import fastify, { FastifyInstance } from 'fastify';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { INDEX_HTML } from './constants/html.js';
 import { healthRoutes } from './routes/health.routes.js';
 import { trackingRoutes } from './routes/tracking.routes.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export function buildApp(): FastifyInstance {
   const isTest = process.env.NODE_ENV === 'test';
@@ -20,18 +15,23 @@ export function buildApp(): FastifyInstance {
         },
   });
 
-  // Enable CORS
+  // Enable CORS for all origins
   app.register(cors, {
     origin: '*',
     methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   });
 
-  // Serve static UI assets from public directory
-  const publicPath = path.resolve(__dirname, 'public');
-  app.register(fastifyStatic, {
-    root: publicPath,
-    prefix: '/',
-    decorateReply: false,
+  // Explicit route for root UI and index.html with embedded HTML
+  app.get('/', async (_request, reply) => {
+    return reply.type('text/html; charset=utf-8').send(INDEX_HTML);
+  });
+
+  app.get('/index.html', async (_request, reply) => {
+    return reply.type('text/html; charset=utf-8').send(INDEX_HTML);
+  });
+
+  app.get('/api/index', async (_request, reply) => {
+    return reply.type('text/html; charset=utf-8').send(INDEX_HTML);
   });
 
   // Register API Routes
